@@ -9,6 +9,8 @@ class Category(models.Model):
         return self.name
 
 class Product(models.Model):
+    # Todo : add sku property as PK, add image field
+    sku = models.CharField(max_length=30)
     name = models.CharField(max_length=20)
     description = models.TextField(max_length=1024)
     price = models.FloatField()
