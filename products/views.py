@@ -1,34 +1,13 @@
-from multiprocessing.managers import Value
-from unicodedata import category
-
 from rest_framework.views import APIView, Response
 from rest_framework import status
 from .models import Category, Product
 from .serializers import (
     ProductSerializer,
-    CategorySerializer,
-    CartSerializer,
     ProductCartSerializer,
     OrderSerializer,
     OrderProductSerializer
 )
 
-#create a new category
-class CategoryCreateView(APIView):
-    def post(self, request):
-        category_name = request.data.get("name", None)
-        if not category_name:
-            return Response({"message": "Category name is required"}, status = status.HTTP_400_BAD_REQUEST)
-        try:
-            if Category.objects.filter(name = category_name).exists():
-                return Response({"message": f"Category with name {category_name} already exists!"})
-            serializer = CategorySerializer(data=request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status = status.HTTP_201_CREATED)
-            return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
-        except Exception as e:
-            Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 #create a new product
 class ProductCreateView(APIView):
