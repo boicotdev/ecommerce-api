@@ -51,11 +51,14 @@ class Order(models.Model):
     status = models.CharField(max_length=12, choices=STATUS)
 
     def __str__(self):
-        return f"Order: {self.creation_date} - {self.user}"
+        return f"(Order: {self.id} | Created - {self.creation_date} | User - {self.user})"
 
 class OrderProduct(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     price = models.FloatField()
     quantity = models.IntegerField()
+
+    def __str__(self):
+        return f"Producto {self.product.name} - {self.order}"
 
