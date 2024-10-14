@@ -26,7 +26,7 @@ from products.product_order.views import (
 )
 
 from products.product_cart.views import (
-    ProductCartCreateView, ProductCartUserList,
+    ProductCartCreateView, ProductCartUserList, ProductCartUserRemove,
 )
 urlpatterns = [
 
@@ -52,5 +52,6 @@ urlpatterns = [
     #------------------------- product-cart endpoints --------------------
     path("carts/products/create/", ProductCartCreateView.as_view()), #add a new product to cart
     path("carts/products/list/", ProductCartUserList.as_view()), #retrieve all products per user into a cart
+    path("carts/products/remove/", ProductCartUserRemove.as_view()), #remove a product from a given cart
     
 ]

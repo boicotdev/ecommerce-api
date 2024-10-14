@@ -60,3 +60,44 @@ class ProductCartUserList(APIView):
 
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#edit a product into a single cart
+
+#remove a product into a cart
+class ProductCartUserRemove(APIView):
+    def delete(self, request):
+        cart_id = request.data.get("cart", None)
+        product_id = request.data.get("product", None)
+        user_id = request.data.get("user", None)
+
+        if not cart_id or not product_id or not user_id:
+            return Response({"message": "All fields are required"}, status = status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(pk = user_id)
+            cart = Cart.objects.filter(pk = cart_id, user = user).first()
+            product = ProductCart.objects.filter(pk = product_id, cart = cart).first()
+
+            #check if Cart or ProductCart not exists
+            if not cart:
+                raise Cart.DoesNotExist
+            if not  product:
+                raise ProductCart.DoesNotExist
+
+            #deleting a product
+            product.delete()
+            return Response({"message": "Product cart was deleted successfully"}, status = status.HTTP_204_NO_CONTENT)
+
+        except User.DoesNotExist:
+            return Response({"message": f"User with ID {user_id} doesn't exists"}, status = status.HTTP_400_BAD_REQUEST)
+
+        except Cart.DoesNotExist:
+            return Response({"message": f"Cart with ID {cart_id} doesn't exists"}, status = status.HTTP_400_BAD_REQUEST)
+
+        except ProductCart.DoesNotExist:
+            return Response({"message": f"Product with ID {product_id} doesn't exists"}, status = status.HTTP_400_BAD_REQUEST)
+
+
+        except Exception as e:
+            return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+
