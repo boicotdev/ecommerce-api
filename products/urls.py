@@ -21,6 +21,13 @@ from products.orders.views import (
     OrderUserRemove
 )
 
+from products.product_order.views import (
+    OrderProductCreateView,
+)
+
+from products.product_cart.views import (
+    ProductCartCreateView, ProductCartUserList,
+)
 urlpatterns = [
 
     path("products/categories/create/", CategoryCreateView.as_view()), #create a new category
@@ -38,5 +45,12 @@ urlpatterns = [
     path("carts/orders/create/", OrderCreateView.as_view()),
     path("carts/orders/list/", OrderUserList.as_view()),
     path("carts/orders/order/delete/", OrderUserRemove.as_view()),
+
+    #------------------------- product-orders endpoints -------------------
+    path("carts/orders/product-orders/create/", OrderProductCreateView.as_view()),
+
+    #------------------------- product-cart endpoints --------------------
+    path("carts/products/create/", ProductCartCreateView.as_view()), #add a new product to cart
+    path("carts/products/list/", ProductCartUserList.as_view()), #retrieve all products per user into a cart
     
 ]
