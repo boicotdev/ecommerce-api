@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views import (
-    ProductCreateView,
+    ProductCreateView, ProductListView,
 )
 from products.categories.views import (
     CategoryCreateView,
@@ -35,6 +35,7 @@ urlpatterns = [
     path("products/categories/", CategoryListView.as_view()), #list all categories
     path("products/categories/update/", CategoryUpdateView.as_view()), #update a category
     path("products/categories/remove/", CategoryRemoveView.as_view()), #remove a category
+    path("products/list/", ProductListView.as_view()), #retrieve all products
 
     #------------------------ carts endpoints -----------------------------
     path("carts/create/", CartCreateView.as_view()), #create carts
