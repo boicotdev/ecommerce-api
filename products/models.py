@@ -16,6 +16,9 @@ class Product(models.Model):
     price = models.FloatField()
     stock = models.IntegerField(default=1)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    main_image = models.ImageField(upload_to="static/images/products", default="static/images/products/dummie_image.jpeg")
+    first_image = models.ImageField(upload_to="static/images/products/", default="static/images/products/dummie_image.jpeg")
+    second_image = models.ImageField(upload_to="static/images/products/", default="static/images/products/dummie_image.jpeg")
 
     def __str__(self):
         return self.name

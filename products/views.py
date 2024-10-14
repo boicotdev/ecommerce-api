@@ -1,16 +1,17 @@
 from rest_framework.views import APIView, Response
 from rest_framework import status
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .models import Category, Product
 from .serializers import (
     ProductSerializer,
-    ProductCartSerializer,
-    OrderSerializer,
-    OrderProductSerializer
 )
 
 
 #create a new product
 class ProductCreateView(APIView):
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+    permission_classes = [IsAuthenticated, IsAdminUser]
     def post(self, request):
         sku = request.data.get("sku", None)
         name = request.data.get("name", None)
