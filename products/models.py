@@ -20,7 +20,6 @@ class Product(models.Model):
     def __str__(self):
         return self.name
 
-
 class Cart(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=30)
@@ -36,7 +35,7 @@ class ProductCart(models.Model):
     quantity = models.IntegerField(default=1)
 
     def __str__(self):
-        return f"{self.product} - {self.cart.name}"
+        return f"( Product - {self.product} | Cart - {self.cart.name} )"
 
 class Order(models.Model):
     STATUS = (
@@ -51,7 +50,7 @@ class Order(models.Model):
     status = models.CharField(max_length=12, choices=STATUS)
 
     def __str__(self):
-        return f"(Order: {self.id} | Created - {self.creation_date} | User - {self.user})"
+        return f"(Order: {self.pk} | Created - {self.creation_date} | User - {self.user})"
 
 class OrderProduct(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
@@ -60,5 +59,5 @@ class OrderProduct(models.Model):
     quantity = models.IntegerField()
 
     def __str__(self):
-        return f"Producto {self.product.name} - {self.order}"
+        return f"{self.product.name} - {self.order}"
 

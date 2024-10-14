@@ -30,6 +30,7 @@ class ProductCartSerializer(ModelSerializer):
     class Meta:
         model = ProductCart
         fields = '__all__'
+        depth = 2
 
 class OrderSerializer(ModelSerializer):
     class Meta:
