@@ -7,6 +7,7 @@ from .models import (
     Category,
     Cart
 )
+from rest_framework import serializers
 
 class CategorySerializer(ModelSerializer):
     class Meta:
@@ -14,13 +15,12 @@ class CategorySerializer(ModelSerializer):
         fields = '__all__'
 
 
-class ProductSerializer(ModelSerializer):
-    """
-    Represents a `Product` on ecommerce
-    """
+class ProductSerializer(serializers.ModelSerializer):
+    category_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), source="category")
+    
     class Meta:
         model = Product
-        fields = '__all__'
+        fields = ['name', 'price', 'sku', 'description', 'stock', 'category_id', 'recommended', 'best_seller', 'main_image']
         depth = 2
 
 class ProductCartSerializer(ModelSerializer):
