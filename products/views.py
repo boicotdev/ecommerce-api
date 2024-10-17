@@ -1,3 +1,4 @@
+from rest_framework.decorators import parser_classes
 from rest_framework.views import APIView, Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
@@ -89,9 +90,10 @@ class ProductUpdateView(APIView):
     def put(self, request):
         #permission_classes = [IsAuthenticated, IsAdminUser]
         product_sku = request.data.get("sku")
+        parser_classes = [MultiPartParser, FormParser, JSONParser]
 
         if not product_sku:
-            return Response({"message" : f"Product with ID {product_id} doesn't exists"}, status = status.HTTP_400_BAD_REQUEST)
+            return Response({"message" : f"Product with ID {product_sku} doesn't exists"}, status = status.HTTP_400_BAD_REQUEST)
 
         try:
             product = Product.objects.get(sku = product_sku)
@@ -112,18 +114,18 @@ class ProductUpdateView(APIView):
 class ProductRemoveView(APIView):
     def delete(self, request):
         #permission_classes = [IsAuthenticated, IsAdminUser]
-        product_id = request.data.get("product", None)
+        product_sku = request.data.get("sku", None)
 
-        if not product_id:
+        if not product_sku:
             return Response({"message":"Product ID is required."}, status = status.HTTP_400_BAD_REQUEST)
 
         try:
-            product = Product.objects.get(pk = product_id)
+            product = Product.objects.get(sku = product_sku)
             product.delete()
             return Response({"message" : "Product was deleted successfully"}, status = status.HTTP_204_NO_CONTENT)
 
         except Product.DoesNotExist:
-            return Response({"message" : f"Product with ID {product_id} doesn't exists"}, status = status.HTTP_400_BAD_REQUEST)
+            return Response({"message" : f"Product with ID {product_sku} doesn't exists"}, status = status.HTTP_400_BAD_REQUEST)
         
         except Exception as e:
             return Response({"message" : str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
