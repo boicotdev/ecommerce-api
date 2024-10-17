@@ -83,4 +83,48 @@ class ProductDetailsView(APIView):
         except Exception as e:
             return Response({"message" : str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-                             
+
+#update a single product
+class ProductUpdateView(APIView):
+    def put(self, request):
+        #permission_classes = [IsAuthenticated, IsAdminUser]
+        product_sku = request.data.get("sku")
+
+        if not product_sku:
+            return Response({"message" : f"Product with ID {product_id} doesn't exists"}, status = status.HTTP_400_BAD_REQUEST)
+
+        try:
+            product = Product.objects.get(sku = product_sku)
+            serializer = ProductSerializer(product, data = request.data, partial = True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status = status.HTTP_200_OK)
+            
+            return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+        
+        except Product.DoesNotExist:
+            return Response({"message" : f"Product with SKU {product_sku} doesn't exists"}, status = status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({"message" : str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+#remove a single product
+class ProductRemoveView(APIView):
+    def delete(self, request):
+        #permission_classes = [IsAuthenticated, IsAdminUser]
+        product_id = request.data.get("product", None)
+
+        if not product_id:
+            return Response({"message":"Product ID is required."}, status = status.HTTP_400_BAD_REQUEST)
+
+        try:
+            product = Product.objects.get(pk = product_id)
+            product.delete()
+            return Response({"message" : "Product was deleted successfully"}, status = status.HTTP_204_NO_CONTENT)
+
+        except Product.DoesNotExist:
+            return Response({"message" : f"Product with ID {product_id} doesn't exists"}, status = status.HTTP_400_BAD_REQUEST)
+        
+        except Exception as e:
+            return Response({"message" : str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+
