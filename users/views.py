@@ -1,7 +1,16 @@
 from rest_framework.views import APIView, Response
 from rest_framework import status
-from .serializers import UserSerializer
+from .serializers import UserSerializer, CustomTokenObtainPairSerializer
+from rest_framework_simplejwt.views import  TokenObtainPairView, TokenRefreshView
 from .models import User
+
+
+
+#login view
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+
 
 #create a new User instance
 class UserCreateView(APIView):
