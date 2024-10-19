@@ -1,7 +1,7 @@
 from rest_framework.views import APIView, Response
 from rest_framework import status
-from .serializers import UserSerializer, CustomTokenObtainPairSerializer
 from rest_framework_simplejwt.views import  TokenObtainPairView, TokenRefreshView
+from .serializers import UserSerializer, CustomTokenObtainPairSerializer
 from .models import User
 
 
@@ -15,7 +15,8 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 #create a new User instance
 class UserCreateView(APIView):
     """
-    Create a new `User`
+    Create a new `User` instance without any special permissions
+    Any user can use this view to create an account
     """
     def post(self, request):
         username = request.data.get("username", None)
@@ -43,6 +44,10 @@ class UserCreateView(APIView):
 
 #update a single user
 class UserUpdateView(APIView):
+    """
+    Handle a `User` instance edition
+    You must provide a username of the user you want edit
+    """
     def put(self, request):
         username = request.data.get("username", None)
 
@@ -56,7 +61,7 @@ class UserUpdateView(APIView):
                 user_serializer = UserSerializer(user_instance, data=request.data, partial=True)
 
                 if user_serializer.is_valid():
-                    user_serializer.save()  # Guardar los cambios
+                    user_serializer.save()
                     return Response(user_serializer.data, status=status.HTTP_200_OK)
 
                 return Response(user_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -79,6 +84,10 @@ class UserListView(APIView):
 
 #remove a single user
 class UserDeleteView(APIView):
+    """
+    View created to handle `User` deletions
+    -params: username.
+    """
     def delete(self, request):
         username = request.data.get("username", None)
         if not username:
@@ -91,3 +100,26 @@ class UserDeleteView(APIView):
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+class CommentView(APIView):
+    def post(self, request):
+        comment = request.data.get("comment", None)
+        user = request.data.get("user", None)
+
+        #check if required fields are fulfilled
+        if not comment or not user:
+            return Response({"message": "All fields are required"}, status = status.HTTP_400_BAD_REQUEST)
+        try:
+            User.objects.get(pk = user)
+            serializer = ReviewSerializer(data = request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status = status.HTTP_201_CREATED)
+
+            return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+
+        except User.DoesNotExist:
+            return Response({"message": "Bad Request"}, status = status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
