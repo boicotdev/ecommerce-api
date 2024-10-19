@@ -5,7 +5,8 @@ from .views import (
     UserListView, 
     UserUpdateView, 
     UserDeleteView, 
-    CustomTokenObtainPairView
+    CustomTokenObtainPairView,
+    CommentView
 )
 
 
@@ -15,4 +16,5 @@ urlpatterns = [
     path("users/edit/", UserUpdateView.as_view()), #edit a single user
     path("users/delete/", UserDeleteView.as_view()), #delete a single user
     path("users/token/obtain/", CustomTokenObtainPairView.as_view()), #token obtain
+    path("users/comments/comment/", CommentView.as_view()), #create a new comment
 ]
