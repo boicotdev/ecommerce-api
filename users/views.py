@@ -42,6 +42,24 @@ class UserCreateView(APIView):
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+#retrieve user
+class UserDetailsView(APIView):
+    def get(self, request):
+        user_id = request.query_params.get("user", None)
+
+        if not user_id:
+            return Response({"message": "User ID is required"}, status = status.HTTP_400_BAD_REQUEST)
+        try:
+            user = User.objects.get(pk = user_id)
+            serializer = UserSerializer(user, many=False)
+            return Response(serializer.data, status = status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({"message": f"User with ID {user_id} wasn't found"}, status = status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(request.query_params)
+            return  Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
 #update a single user
 class UserUpdateView(APIView):
     """
@@ -50,6 +68,7 @@ class UserUpdateView(APIView):
     """
     def put(self, request):
         username = request.data.get("username", None)
+        print(request.data)
 
         if not username:
             return Response({"message": "Username field is required"}, status=status.HTTP_400_BAD_REQUEST)
