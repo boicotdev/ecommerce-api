@@ -18,6 +18,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         data['id'] = self.user.id
         data['is_superuser'] = self.user.is_superuser
         data['username'] = self.user.username
+        data['avatar'] = self.user.avatar.url
         return data
 
 
