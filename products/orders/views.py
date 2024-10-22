@@ -50,8 +50,34 @@ class OrderUserList(APIView):
 
 
 #update
+class OrderUserCancellView(APIView):
+    def put(self, request):
+        order_id = request.data.get("order", None)
+        user_id = request.data.get("user", None)
+        print(request.data)
+        if not order_id or not user_id:
+            return Response({"message":"Order ID is missing"}, status = status.HTTP_400_BAD_REQUEST)
 
+        try:
+            user = User.objects.get(pk = user_id)
+            order = Order.objects.filter(pk = order_id, user = user).first()
 
+            if order is not None:
+                serializer = OrderSerializer(order, data=request.data, partial=True)
+                if serializer.is_valid():
+                    serializer.save()
+                    return Response(serializer.data, status = status.HTTP_200_OK)
+                return Response({"message": serializer.errors}, status = status.HTTP_400_BAD_REQUEST)
+            raise Order.DoesNotExist
+
+        except User.DoesNotExist:
+            return Response({"message":"User not found"}, status = status.HTTP_400_BAD_REQUEST)
+
+        except Order.DoesNotExist:
+            return Response({"message":"Order not found"}, status = status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 #delete
 class OrderUserRemove(APIView):
     def delete(self, request):
