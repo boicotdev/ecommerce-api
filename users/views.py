@@ -24,6 +24,7 @@ class UserCreateView(APIView):
         last_name = request.data.get("last_name", None)
         email = request.data.get("email", None)
 
+        
         #validate if required fields are fulfilled
         if not username or not first_name or not last_name or not email:
             return Response({"message": "Some fields are missing"}, status=status.HTTP_400_BAD_REQUEST)
@@ -67,15 +68,14 @@ class UserUpdateView(APIView):
     You must provide a username of the user you want edit
     """
     def put(self, request):
-        username = request.data.get("username", None)
+        user_id = request.data.get("id", None)
         print(request.data)
-
-        if not username:
-            return Response({"message": "Username field is required"}, status=status.HTTP_400_BAD_REQUEST)
+        if not user_id:
+            return Response({"message": "User ID field is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            if User.objects.filter(username=username).exists():
-                user_instance = User.objects.get(username=username)
+            if User.objects.filter(pk=user_id).exists():
+                user_instance = User.objects.get(pk = user_id)
                 # Pasar el usuario existente al serializador para su actualización
                 user_serializer = UserSerializer(user_instance, data=request.data, partial=True)
 
