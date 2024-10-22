@@ -140,9 +140,6 @@ STATIC_URL = '/static/'
 MEDIA_URL = '/media/'
 
 
-if DEBUG:
-    STATIC_ROOT = oSTATIC_URL = '/static/'
-
 # settings.py
 
 # Directorio donde se guardarán los archivos subidos

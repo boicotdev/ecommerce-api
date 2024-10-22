@@ -8,12 +8,14 @@ from .views import (
     UserDetailsView,
     CustomTokenObtainPairView,
     CommentView,
+    ClientUserListView
 )
 
 
 urlpatterns = [
     path("users/create/", UserCreateView.as_view()), #create a new user
     path("users/", UserListView.as_view()), #list all users into the database
+    path("dashboard/clients/", ClientUserListView.as_view()), #retrieve all user clients
     path("users/user/", UserDetailsView.as_view()), #retrieve all info of a single user
     path("users/user/update/", UserUpdateView.as_view()), #edit a single user
     path("users/delete/", UserDeleteView.as_view()), #delete a single user

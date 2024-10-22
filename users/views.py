@@ -1,6 +1,7 @@
 from rest_framework.views import APIView, Response
 from rest_framework import status
 from rest_framework_simplejwt.views import  TokenObtainPairView, TokenRefreshView
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .serializers import UserSerializer, CustomTokenObtainPairSerializer
 from .models import User
 
@@ -99,6 +100,19 @@ class UserListView(APIView):
         users = User.objects.all()
         data = UserSerializer(users, many=True)
         return Response(data.data, status = status.HTTP_200_OK)
+
+
+class ClientUserListView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        try:
+            users = User.objects.filter(rol="Cliente")
+            clients = UserSerializer(users, many = True)
+            return Response(clients.data, status = status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 #remove a single user
 class UserDeleteView(APIView):
