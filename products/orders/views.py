@@ -1,4 +1,5 @@
-from rest_framework.views import APIView, Response 
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.views import APIView, Response
 from rest_framework import status
 from products.models import Order
 from users.models import User
@@ -27,7 +28,6 @@ class OrderCreateView(APIView):
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 #read all orders of a single user
 class OrderUserList(APIView):
     def get(self, request):
@@ -46,17 +46,16 @@ class OrderUserList(APIView):
         
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-
 
 #update
-class OrderUserCancellView(APIView):
+class OrderUserCancelView(APIView):
     def put(self, request):
         order_id = request.data.get("order", None)
         user_id = request.data.get("user", None)
-        print(request.data)
-        if not order_id or not user_id:
-            return Response({"message":"Order ID is missing"}, status = status.HTTP_400_BAD_REQUEST)
+        order_status = request.data.get("status", None)
+
+        if not order_id or not user_id or not order_status:
+            return Response({"message":"All fields are required"}, status = status.HTTP_400_BAD_REQUEST)
 
         try:
             user = User.objects.get(pk = user_id)
@@ -78,6 +77,7 @@ class OrderUserCancellView(APIView):
 
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 #delete
 class OrderUserRemove(APIView):
     def delete(self, request):
@@ -104,4 +104,47 @@ class OrderUserRemove(APIView):
 
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
+#order list with superuser permissions
+class OrdersDashboardView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+    def get(self, request):
+        try:
+            orders = Order.objects.all()
+            serializer = OrderSerializer(orders, many = True)
+            return Response(serializer.data, status = status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class OrderDashboardDetailsView(APIView):
+    permission_classes = [IsAuthenticated, IsAdminUser]
+
+    def get(self, request):
+        order_id = request.query_params.get("order", None)
+        if not order_id:
+            return Response({"message": "Order ID is required"}, status = status.HTTP_400_BAD_REQUEST)
+
+        try:
+            order = Order.objects.get(pk = order_id)
+            serializer = OrderSerializer(order, many = False).data
+            return Response(serializer, status = status.HTTP_200_OK)
+        except Order.DoesNotExist:
+            return Response({"message": "Order not found"}, status= status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({"message": str(e)}, status= status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+
+
+
+
+
+
+
+
+

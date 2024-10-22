@@ -24,7 +24,8 @@ from products.orders.views import (
     OrderCreateView,
     OrderUserList,
     OrderUserRemove,
-    OrderUserCancellView
+    OrderUserCancelView,
+    OrdersDashboardView, OrderDashboardDetailsView
 )
 
 from products.product_order.views import (
@@ -52,13 +53,15 @@ urlpatterns = [
     path("orders/carts/delete/", CartUserDelete.as_view()), #remove a unique cart
 
     #------------------------ orders endpoints --------------------------
-    path("carts/orders/create/", OrderCreateView.as_view()),
-    path("carts/orders/list/", OrderUserList.as_view()),
-    path("carts/orders/order/delete/", OrderUserRemove.as_view()),
+    path("carts/orders/create/", OrderCreateView.as_view()), #create a new user order
+    path("carts/orders/list/", OrderUserList.as_view()), #retrieve all orders of a user
+    path("carts/orders/order/delete/", OrderUserRemove.as_view()), #delete an order
+    path("orders/order/cancel/", OrderUserCancelView.as_view()), #cancel an order
+    path("dashboard/orders/", OrdersDashboardView.as_view()), #retrieve all user orders
+    path("dashboard/order/details/", OrderDashboardDetailsView.as_view()), #retrieve details of an order
 
     #------------------------- product-orders endpoints -------------------
     path("carts/orders/product-orders/create/", OrderProductCreateView.as_view()),
-    path("orders/order/cancell/", OrderUserCancellView.as_view()),
 
     #------------------------- product-cart endpoints --------------------
     path("carts/products/create/", ProductCartCreateView.as_view()), #add a new product to cart
