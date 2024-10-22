@@ -69,7 +69,6 @@ class UserUpdateView(APIView):
     """
     def put(self, request):
         user_id = request.data.get("id", None)
-        print(request.data)
         if not user_id:
             return Response({"message": "User ID field is required"}, status=status.HTTP_400_BAD_REQUEST)
 

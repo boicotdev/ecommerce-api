@@ -51,7 +51,6 @@ class Order(models.Model):
         ("DELIVERED", "DELIVERED"),
         ("CANCELLED", "CANCELLED"),
         ("PENDING", "PENDING"),
-        ("PAY", "PAY")
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -59,7 +58,7 @@ class Order(models.Model):
     status = models.CharField(max_length=12, choices=STATUS)
 
     def __str__(self):
-        return f"(Order: {self.pk} | Created - {self.creation_date} | User - {self.user})"
+        return f"(Order: {self.pk} | Status - {self.status} | Created - {self.creation_date} | User - {self.user})"
 
 class OrderProduct(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
