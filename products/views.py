@@ -59,9 +59,8 @@ class ProductListView(APIView):
             serializer = ProductSerializer(products, many= True)
             return Response(serializer.data, status = status.HTTP_200_OK)
         except Exception as e:
+            print(e)
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
 
 
 #retrieve a single product 
@@ -87,10 +86,11 @@ class ProductDetailsView(APIView):
 
 #update a single product
 class ProductUpdateView(APIView):
+    #permission_classes = [IsAuthenticated, IsAdminUser]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
+
     def put(self, request):
-        #permission_classes = [IsAuthenticated, IsAdminUser]
         product_sku = request.data.get("sku")
-        parser_classes = [MultiPartParser, FormParser, JSONParser]
 
         if not product_sku:
             return Response({"message" : f"Product with ID {product_sku} doesn't exists"}, status = status.HTTP_400_BAD_REQUEST)

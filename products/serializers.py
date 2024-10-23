@@ -17,11 +17,17 @@ class CategorySerializer(ModelSerializer):
 
 class ProductSerializer(serializers.ModelSerializer):
     category_id = serializers.PrimaryKeyRelatedField(queryset=Category.objects.all(), source="category")
-    
+
+    def get_category(self, obj):
+        return obj.category.name if obj.category else None
+
+    category = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
-        fields = ['name', 'price', 'sku', 'description', 'stock', 'category_id', 'recommended', 'best_seller', 'main_image']
-        depth = 2
+        fields = ['name', 'price', 'sku', 'description', 'stock', 'category_id',
+                  'recommended', 'best_seller', 'main_image', 'category']
+
 
 class ProductCartSerializer(ModelSerializer):
     """
