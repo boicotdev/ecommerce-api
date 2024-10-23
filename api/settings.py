@@ -131,25 +131,16 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-# settings.py
-
-# Directorio donde se guardarán los archivos subidos
-#MEDIA_ROOT = '/staticfiles/'
-
 # URL base para acceder a los archivos multimedia
 MEDIA_URL = '/media/'
 
-
-# settings.py
-
 # Directorio donde se guardarán los archivos subidos
 #MEDIA_ROOT = '/staticfiles/'
-
-# URL base para acceder a los archivos multimedia
-MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
 if DEBUG:
+    #MEDIA_ROOT = "/static/"
     STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 else:
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
