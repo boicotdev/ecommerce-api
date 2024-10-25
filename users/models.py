@@ -1,11 +1,10 @@
-from typing import Any
 from django.db import models
 from django.contrib.auth.models import BaseUserManager, AbstractUser
 from django.contrib.auth.models import Group, Permission
 
 
 class CustomUserManager(BaseUserManager):
-    def create_user(self, username, email, password=None, **extra_fields) -> Any:
+    def create_user(self, username, email, password=None, **extra_fields):
         if not email:
             raise ValueError('Please provide an email address')
         email = self.normalize_email(email)
@@ -14,7 +13,7 @@ class CustomUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, username, email, password=None, **extra_fields) -> Any:
+    def create_superuser(self, username, email, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(username=username, email=email, password=password, **extra_fields)
@@ -39,3 +38,12 @@ class User(AbstractUser):
 
     def __str__(self) -> str:
         return f'{self.username}'
+
+
+class Comment(models.Model):
+    user = models.ForeignKey(User, on_delete = models.CASCADE, related_name = "User comments+")
+    raw_comment = models.TextField(max_length = 1000)
+    pub_date = models.DateTimeField(auto_now_add = True)
+    
+    def __str__(self):
+        return f"Comentario del usuario {self.user.username} | publicado {self.pub_date}"

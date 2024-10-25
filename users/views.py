@@ -2,8 +2,8 @@ from rest_framework.views import APIView, Response
 from rest_framework import status
 from rest_framework_simplejwt.views import  TokenObtainPairView, TokenRefreshView
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
-from .serializers import UserSerializer, CustomTokenObtainPairSerializer
-from .models import User
+from .serializers import UserSerializer, CustomTokenObtainPairSerializer, CommentSerializer
+from .models import User, Comment
 
 
 
@@ -133,9 +133,9 @@ class UserDeleteView(APIView):
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class CommentView(APIView):
+class CommentCreateView(APIView):
     def post(self, request):
-        comment = request.data.get("comment", None)
+        comment = request.data.get("raw_comment", None)
         user = request.data.get("user", None)
 
         #check if required fields are fulfilled
@@ -143,7 +143,7 @@ class CommentView(APIView):
             return Response({"message": "All fields are required"}, status = status.HTTP_400_BAD_REQUEST)
         try:
             User.objects.get(pk = user)
-            serializer = ReviewSerializer(data = request.data)
+            serializer = CommentSerializer(data = request.data)
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status = status.HTTP_201_CREATED)
@@ -155,3 +155,44 @@ class CommentView(APIView):
 
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+class CommentRetrieveListView(APIView):
+    """
+    Any user can access to this view
+    :return: An array of `Comment` objects
+    """
+    def get(self, request):
+        try:
+            comments = Comment.objects.all()
+            serializer = CommentSerializer(comments, many = True)
+            return Response(serializer.data, status = status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CommentUserRemoveView(APIView):
+    def delete(self, request):
+        
+        user_id = request.data.get("user", None)
+        comment_id = request.data.get("comment", None)
+
+        if not user_id or not comment_id:
+            return Response({"message": "All fields are required"}, status = status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(pk = user_id)
+            comment = Comment.objects.get(pk = comment_id, user = user)
+            comment.delete()
+
+            return Response({"message": "Comment was deleted successfully"}, status = status.HTTP_204_NO_CONTENT)
+        except User.DoesNotExist:
+            return Response({"message": f"User with ID {user_id} doesn't found"}, status = status.HTTP_400_BAD_REQUEST)
+        
+        except Comment.DoesNotExist:
+            return Response({"message": f"Comment with ID {comment_id} doesn't found"}, status = status.HTTP_400_BAD_REQUEST)
+        
+        except Exception as e:
+            return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+

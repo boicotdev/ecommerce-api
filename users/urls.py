@@ -7,8 +7,10 @@ from .views import (
     UserDeleteView,
     UserDetailsView,
     CustomTokenObtainPairView,
-    CommentView,
-    ClientUserListView
+    CommentCreateView,
+    ClientUserListView,
+    CommentRetrieveListView,
+    CommentUserRemoveView
 )
 
 
@@ -20,5 +22,7 @@ urlpatterns = [
     path("users/user/update/", UserUpdateView.as_view()), #edit a single user
     path("users/delete/", UserDeleteView.as_view()), #delete a single user
     path("users/token/obtain/", CustomTokenObtainPairView.as_view()), #token obtain
-    path("users/comments/comment/", CommentView.as_view()), #create a new comment
+    path("users/comments/create/", CommentCreateView.as_view()), #create a new comment
+    path("users/comments/", CommentRetrieveListView.as_view()),
+    path("users/comments/remove/", CommentUserRemoveView.as_view())
 ]
