@@ -5,7 +5,8 @@ from .models import (
     Order,
     OrderProduct,
     Category,
-    Cart
+    Cart,
+    ProductReview
 )
 from rest_framework import serializers
 
@@ -28,6 +29,10 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ['name', 'price', 'sku', 'description', 'stock', 'category_id',
                   'recommended', 'best_seller', 'main_image', 'category']
 
+class ProductReviewSerializer(ModelSerializer):
+    class Meta:
+        model = ProductReview
+        fields ='__all__'
 
 class ProductCartSerializer(ModelSerializer):
     """

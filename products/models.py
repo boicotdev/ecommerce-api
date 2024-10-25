@@ -69,3 +69,13 @@ class OrderProduct(models.Model):
     def __str__(self):
         return f"{self.product.name} - {self.order}"
 
+
+class ProductReview(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    review = models.TextField(max_length=525)
+    rank = models.IntegerField(choices=[(n, str(n)) for n in range(1, 6)])
+
+    def __str__(self):
+        return f"El usuario {self.user.username} calificó el producto {self.product.name} con una calificación de {self.rank} puntos"
+
