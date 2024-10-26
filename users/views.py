@@ -1,6 +1,7 @@
 from rest_framework.views import APIView, Response
 from rest_framework import status
 from rest_framework_simplejwt.views import  TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .serializers import UserSerializer, CustomTokenObtainPairSerializer, CommentSerializer
 from .models import User, Comment
@@ -10,6 +11,21 @@ from .models import User, Comment
 #login view
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+
+class CustomTokenRefreshPairView(TokenRefreshView):
+    ...
+
+class LogoutUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data.get("refresh_token")
+            token = RefreshToken(refresh_token)
+            token.blacklist()  # Invalidar el token de refresh (requiere que el blacklisting esté habilitado)
+            return Response({"message": "Sesión cerrada exitosamente."}, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response({"message": "Token no válido."}, status=status.HTTP_400_BAD_REQUEST)
 
 
 
@@ -140,12 +156,13 @@ class CommentCreateView(APIView):
 
         #check if required fields are fulfilled
         if not comment or not user:
+            print(request.data)
             return Response({"message": "All fields are required"}, status = status.HTTP_400_BAD_REQUEST)
         try:
-            User.objects.get(pk = user)
+            user = User.objects.get(pk = user)
             serializer = CommentSerializer(data = request.data)
             if serializer.is_valid():
-                serializer.save()
+                serializer.save(user = user)
                 return Response(serializer.data, status = status.HTTP_201_CREATED)
 
             return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
@@ -154,6 +171,7 @@ class CommentCreateView(APIView):
             return Response({"message": "Bad Request"}, status = status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
+            print(e)
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
