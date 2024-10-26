@@ -50,7 +50,18 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
+    def get_user_fullname(self, obj):
+        return f"{obj.user.first_name} {obj.user.last_name}" if obj.user.first_name and obj.user.last_name else "Uknown"
+
+    def get_user_avatar(self, obj):
+        return obj.user.avatar.url if obj.user.avatar.url else "undefined"
+    user_fullname = serializers.SerializerMethodField()
+    user_avatar = serializers.SerializerMethodField()
+
+
+
+
     class Meta:
         model = Comment
-        fields = '__all__'
+        fields = ['id', 'raw_comment', 'pub_date', 'user_avatar', 'user_fullname']
 
