@@ -12,7 +12,8 @@ from .views import (
     CommentRetrieveListView,
     CommentUserRemoveView,
     CustomTokenRefreshPairView,
-    LogoutUserView
+    LogoutUserView,
+    TestimonialsUserRetrieveView, TestimonialUserRemoveView
 )
 
 
@@ -28,5 +29,7 @@ urlpatterns = [
     path("users/delete/", UserDeleteView.as_view()), #delete a single user
     path("testimonials/create/", CommentCreateView.as_view()), #create a new comment
     path("testimonials/", CommentRetrieveListView.as_view()),
-    path("testimonials/remove/", CommentUserRemoveView.as_view())
+    path("testimonials/remove/", CommentUserRemoveView.as_view()),
+    path("testimonials/user/", TestimonialsUserRetrieveView.as_view()), #retrieve all testimonials of a user
+    path("testimonials/testimonial/remove/", TestimonialUserRemoveView.as_view()), #remove a user comment
 ]

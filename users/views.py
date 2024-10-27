@@ -156,7 +156,6 @@ class CommentCreateView(APIView):
 
         #check if required fields are fulfilled
         if not comment or not user:
-            print(request.data)
             return Response({"message": "All fields are required"}, status = status.HTTP_400_BAD_REQUEST)
         try:
             user = User.objects.get(pk = user)
@@ -214,3 +213,47 @@ class CommentUserRemoveView(APIView):
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+class TestimonialsUserRetrieveView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self, request):
+        user_id = request.query_params.get("user")
+
+        if not user_id:
+            return Response({"message": f"User ID wasn't provided"}, status = status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(pk = user_id)
+            testimonials = Comment.objects.filter(user = user)
+            serializer = CommentSerializer(testimonials, many= True)
+            return Response(serializer.data, status = status.HTTP_200_OK)
+
+        except User.DoesNotExist:
+            return Response({"message": f"User with ID wasn't found"}, status = status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+class TestimonialUserRemoveView(APIView):
+    permission_classes = [IsAuthenticated]
+    def delete(self, request):
+        user_id = request.data.get("user", None)
+        testimonial_id = request.data.get("testimonial", None)
+
+        if not user_id or not testimonial_id:
+            return Response({"message": f"User ID and testimonial ID is required"}, status = status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(pk = user_id)
+            testimonial = Comment.objects.get(pk = testimonial_id, user = user)
+            testimonial.delete()
+            return Response({"message": "Testimonial was deleted"}, status = status.HTTP_204_NO_CONTENT)
+
+        except User.DoesNotExist:
+            return Response({"message": f"User with ID {user_id} wasn't found"}, status = status.HTTP_400_BAD_REQUEST)
+
+        except Comment.DoesNotExist:
+            return Response({"message": f"Testimonial with ID {testimonial_id} wasn't found"}, status = status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
