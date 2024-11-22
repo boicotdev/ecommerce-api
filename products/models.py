@@ -79,3 +79,46 @@ class ProductReview(models.Model):
     def __str__(self):
         return f"El usuario {self.user.username} calificó el producto {self.product.name} con una calificación de {self.rank} puntos"
 
+class Shipment(models.Model):
+    """
+    Create a new shipment object in the shop
+    """
+    customer = models.ForeignKey(User, on_delete=models.CASCADE)
+    order = models.OneToOneField(Order, on_delete=models.CASCADE)
+    shipment_date = models.DateTimeField(auto_now=True)
+    shipment_address = models.CharField(max_length=50)
+    shipment_city = models.CharField(max_length=30)
+    shipment_date_post_code = models.CharField(max_length=10)
+
+    def __str__(self):
+        return f"Shipment to ({self.shipment_address} - {self.shipment_city})"
+
+class Payment(models.Model):
+    PAYMENT_METHODS = (
+        ("CASH", "CASH"),
+        ("DEBIT_CARD", "DEBIT_CARD"),
+        ("CREDIT_CARD", "CREDIT_CARD")
+    )
+
+    PAYMENT_STATUS = (
+        ("APPROVED", "APPROVED"),
+        ("DECLINED", "DECLINED"),
+        ("WAITING", "WAITING")
+    )
+
+    order = models.OneToOneField(Order, on_delete=models.CASCADE)
+    payment_amount = models.FloatField(2)
+    payment_date = models.DateTimeField(auto_created=True)
+    payment_method = models.CharField(max_length=15, choices= PAYMENT_METHODS)
+    payment_status = models.CharField(max_length=15, choices= PAYMENT_STATUS)
+
+    def __str__(self):
+        return f"{self.order} - {self.payment_status}"
+
+
+
+
+
+
+
+

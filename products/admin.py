@@ -6,7 +6,9 @@ from .models import (
     Order,
     Category,
     Cart,
-    ProductReview
+    ProductReview,
+    Shipment,
+    Payment
 )
 
-admin.site.register([Product, ProductCart, OrderProduct, Order, Category, Cart, ProductReview])
+admin.site.register([Product, ProductCart, OrderProduct, Order, Category, Cart, ProductReview, Shipment, Payment])
