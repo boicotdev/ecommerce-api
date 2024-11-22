@@ -1,5 +1,6 @@
 from django.urls import path
 
+from .payments.views import CreateShipmentView
 from .views import (
     ProductCreateView, 
     ProductListView,
@@ -67,5 +68,8 @@ urlpatterns = [
     path("carts/products/create/", ProductCartCreateView.as_view()), #add a new product to cart
     path("carts/products/list/", ProductCartUserList.as_view()), #retrieve all products per user into a cart
     path("carts/products/remove/", ProductCartUserRemove.as_view()), #remove a product from a given cart
+
+    #-------------------------- Shipments endpoints --------------------
+    path("customer/shipment/create/", CreateShipmentView.as_view()) #create a new shipment
     
 ]

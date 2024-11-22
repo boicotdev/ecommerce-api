@@ -6,7 +6,7 @@ from .models import (
     OrderProduct,
     Category,
     Cart,
-    ProductReview
+    ProductReview, Shipment, Payment
 )
 from rest_framework import serializers
 
@@ -65,3 +65,39 @@ class CartSerializer(ModelSerializer):
     class Meta:
         model = Cart
         fields = '__all__'
+
+class ShipmentSerializer(ModelSerializer):
+    class Meta:
+        model = Shipment
+        '''fields = [
+            "customer_id",
+            "order_id",
+            "shipment_address",
+            "shipment_city",
+            "shipment_date_post_code",
+        ]'''
+        fields = '__all__'
+
+    def validate_customer_id(self, value):
+        if not value:
+            raise serializers.ValidationError("El campo customer_id es obligatorio.")
+        return value
+
+    def validate_order_id(self, value):
+        if Shipment.objects.filter(order_id=value).exists():
+            raise serializers.ValidationError(
+                "Ya existe un envío asociado a esta orden."
+            )
+        return value
+
+
+class PaymentSerializer(ModelSerializer):
+    """
+    Serialize a `Payment` object and handle all logic to create a payment register
+    ----
+    """
+
+    class Meta:
+        model = Payment
+        fields = '__all__'
+        depth = 1
