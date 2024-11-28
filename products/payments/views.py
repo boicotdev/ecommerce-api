@@ -1,5 +1,8 @@
 from rest_framework.views import APIView, Response
 from rest_framework import status
+from rest_framework.decorators import api_view
+import mercadopago
+from decouple import config
 from users.models import User
 from products.models import (
     Shipment,
@@ -9,6 +12,8 @@ from products.serializers import (
     ShipmentSerializer,
     PaymentSerializer
 )
+
+MP_ACCESS_TOKEN = config("MERCADO_PAGO_ACCESS_TOKEN")
 
 class CreateShipmentView(APIView):
     """
@@ -37,4 +42,34 @@ class CreateShipmentView(APIView):
             return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+import mercadopago
+
+class CreatePaymentPreference(APIView):
+    def post(self, request):
+        # Inicializar el SDK con el access token
+        mercado_pago = mercadopago.SDK(MP_ACCESS_TOKEN)
+
+        items = request.data.get('items', [])
+
+        preference_data = {
+            'items': items,
+            'back_urls': {
+                'success': 'http://127.0.0.1:8000/api/v1/payments/succes/',
+                'failure': 'http://127.0.0.1:8000/api/v1/payments/failure/',
+                'pending': 'http://127.0.0.1:8000/api/v1/payments/pending/',
+            },
+            'auto_return': 'approved',
+        }
+
+        # Crear la preferencia de pago
+        preference_response = mercado_pago.preference().create(preference_data)
+        if preference_response['status'] == 201:
+            return Response(preference_response['response'], status=status.HTTP_201_CREATED)
+        else:
+            return Response({'detail': 'Error creating preference!'}, status=status.HTTP_400_BAD_REQUEST)
+
 
