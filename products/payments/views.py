@@ -12,8 +12,10 @@ from products.serializers import (
     ShipmentSerializer,
     PaymentSerializer
 )
+import uuid
 
 MP_ACCESS_TOKEN = config("MERCADO_PAGO_ACCESS_TOKEN")
+
 
 class CreateShipmentView(APIView):
     """
@@ -43,11 +45,6 @@ class CreateShipmentView(APIView):
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-import mercadopago
-
 class CreatePaymentPreference(APIView):
     def post(self, request):
         # Inicializar el SDK con el access token
@@ -58,9 +55,9 @@ class CreatePaymentPreference(APIView):
         preference_data = {
             'items': items,
             'back_urls': {
-                'success': 'http://127.0.0.1:8000/api/v1/payments/succes/',
-                'failure': 'http://127.0.0.1:8000/api/v1/payments/failure/',
-                'pending': 'http://127.0.0.1:8000/api/v1/payments/pending/',
+                'success': 'http://localhost:5172/payments/succes/',
+                'failure': 'http://localhost:5172/payments/failure/',
+                'pending': 'http://localhost:5172/payments/pending/',
             },
             'auto_return': 'approved',
         }
@@ -72,4 +69,55 @@ class CreatePaymentPreference(APIView):
         else:
             return Response({'detail': 'Error creating preference!'}, status=status.HTTP_400_BAD_REQUEST)
 
+
+
+class MercadoPagoPaymentView(APIView):
+    def post(self, request, *args, **kwargs):
+        # Inicializa el SDK de MercadoPago con el token de acceso
+        sdk = mercadopago.SDK(MP_ACCESS_TOKEN)
+
+        # Configura opciones de idempotencia (opcional)
+        request_options = mercadopago.config.RequestOptions()
+        request_options.custom_headers = {
+            'x-idempotency-key': request.data.get('idempotency_key', str(uuid.uuid4()))
+        }
+
+        try:
+            email = request.data["payer"]["email"]
+            dni_type = request.data["payer"]["identification"]["type"]
+            dni_number = request.data["payer"]["identification"]["number"]
+            payment_data = {
+                "transaction_amount": float(request.data.get("transaction_amount")),
+                "token": request.data.get("token"),
+                "description": "Compra de productos",
+                "installments": int(request.data.get("installments")),
+                "payment_method_id": request.data.get("payment_method_id"),
+                "issuer_id": request.data.get("issuer_id"),
+                "payer": {
+                    "email": email,
+                    "identification": {
+                        "type": dni_type,
+                        "number": dni_number
+                    }
+                }
+            }
+            #print(payment_data)
+            #print("------------------------- request data --------------------------")
+            #print(request.data)
+        except (TypeError, ValueError) as e:
+            return Response(
+                {"error": "Invalid payment data", "details": str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Crea el pago usando la API de MercadoPago
+        try:
+            payment_response = sdk.payment().create(request.data, request_options)
+            payment = payment_response.get("response", {})
+            return Response(payment, status=status.HTTP_201_CREATED)
+        except Exception as e:
+            return Response(
+                {"error": "Payment creation failed", "details": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 

@@ -1,6 +1,6 @@
 from django.urls import path
 
-from .payments.views import CreateShipmentView, CreatePaymentPreference
+from .payments.views import CreateShipmentView, CreatePaymentPreference, MercadoPagoPaymentView
 from .views import (
     ProductCreateView, 
     ProductListView,
@@ -71,6 +71,7 @@ urlpatterns = [
 
     #-------------------------- Shipments endpoints --------------------
     path("customer/shipment/create/", CreateShipmentView.as_view()), #create a new shipment
-    path("payments/create-preference/", CreatePaymentPreference.as_view()),
-    
+    path("payment/preferences/", CreatePaymentPreference.as_view()),
+    path("process_payment/", MercadoPagoPaymentView.as_view()),
+
 ]

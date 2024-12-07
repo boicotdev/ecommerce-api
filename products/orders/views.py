@@ -8,13 +8,13 @@ from products.serializers import OrderSerializer
 #create
 class OrderCreateView(APIView):
     def post(self, request):
-        check_status_list = ["PENDING", "DELIVERED", "CANCELLED", "PAY"]
+        check_status_list = ["PENDING", "DELIVERED", "CANCELLED", "APPROVED"]
         status_order = request.data.get("status", None)
         user_id = request.data.get("user")
 
         #check if required fields are fulfilled
         if not user_id or not status_order:
-            return Response({"message": "All fields are requireda"}, status = status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "All fields are required"}, status = status.HTTP_400_BAD_REQUEST)
         #check if the given status is valid
         if not status_order in check_status_list:
             return Response({"message": f"The given status {status_order} isn't valid"}, status = status.HTTP_400_BAD_REQUEST)
@@ -22,7 +22,7 @@ class OrderCreateView(APIView):
         try:
             serializer = OrderSerializer(data = request.data)
             if serializer.is_valid():
-                serializer.save()
+                serializer.save(user=User.objects.get(pk=user_id))
                 return Response(serializer.data, status = status.HTTP_201_CREATED)
             return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
         except Exception as e:
