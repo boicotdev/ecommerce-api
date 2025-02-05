@@ -5,7 +5,7 @@ from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .models import Category, Product
 from .serializers import (
-    ProductSerializer,
+    ProductSerializer, CouponSerializer,
 )
 
 
@@ -129,4 +129,31 @@ class ProductRemoveView(APIView):
         
         except Exception as e:
             return Response({"message" : str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class CouponsCreateView(APIView):
+    def post(self, request):
+        coupon_code = request.data.get('coupon_code', None)
+        discount = request.data.get('discount', None)
+        discount_type = request.data.get('discount_type', None)
+        expiration_date = request.data.get('expiration_date', None)
+
+        if not  coupon_code or not discount or not discount_type or not expiration_date:
+            return Response({'message': 'Todos los campos son obligatorios'}, status = status.HTTP_400_BAD_REQUEST)
+
+        try:
+            serializer = CouponSerializer(data=request.data)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status = status.HTTP_201_CREATED)
+            return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+
+        except Exception as e:
+            return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+
+
+
+
 

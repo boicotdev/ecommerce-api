@@ -6,7 +6,7 @@ from .models import (
     OrderProduct,
     Category,
     Cart,
-    ProductReview, Shipment, Payment
+    ProductReview, Shipment, Payment, Coupon
 )
 from rest_framework import serializers
 
@@ -101,3 +101,8 @@ class PaymentSerializer(ModelSerializer):
         model = Payment
         fields = '__all__'
         depth = 1
+
+class CouponSerializer(ModelSerializer):
+    class Meta:
+        model = Coupon
+        fields = '__all__'
