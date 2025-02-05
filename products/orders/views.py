@@ -1,7 +1,7 @@
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView, Response
 from rest_framework import status
-from products.models import Order
+from products.models import Order, OrderProduct
 from users.models import User
 from products.serializers import OrderSerializer
 
@@ -121,6 +121,13 @@ class OrdersDashboardView(APIView):
 class OrderDashboardDetailsView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
 
+    @staticmethod
+    def get_total(objs):
+        total = 0
+        for obj in objs:
+            total += obj.price * obj.quantity
+        return total #obj.price * obj.quantity or 5000
+
     def get(self, request):
         order_id = request.query_params.get("order", None)
         if not order_id:
@@ -128,12 +135,19 @@ class OrderDashboardDetailsView(APIView):
 
         try:
             order = Order.objects.get(pk = order_id)
+            order_products = OrderProduct.objects.filter(order = order_id)
             serializer = OrderSerializer(order, many = False).data
+            serializer["total"] = self.get_total(order_products)
             return Response(serializer, status = status.HTTP_200_OK)
+
         except Order.DoesNotExist:
             return Response({"message": "Order not found"}, status= status.HTTP_400_BAD_REQUEST)
 
+        except OrderProduct.DoesNotExist:
+            print(request.query_params, 144)
+            return Response({"message": "Order Product not found"}, status= status.HTTP_400_BAD_REQUEST)
         except Exception as e:
+            print(e)
             return Response({"message": str(e)}, status= status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

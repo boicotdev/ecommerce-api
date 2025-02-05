@@ -9,7 +9,6 @@ class Category(models.Model):
         return self.name
 
 class Product(models.Model):
-    # TODO add sku property as PK, add image field
     sku = models.CharField(max_length=30)
     name = models.CharField(max_length=20)
     description = models.TextField(max_length=1024)
@@ -69,7 +68,6 @@ class OrderProduct(models.Model):
     def __str__(self):
         return f"{self.product.name} - {self.order}"
 
-
 class ProductReview(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -115,6 +113,15 @@ class Payment(models.Model):
     def __str__(self):
         return f"{self.order} - {self.payment_status}"
 
+class Coupon(models.Model):
+    coupon_code = models.CharField(max_length=15)
+    discount = models.IntegerField()
+    creation_date = models.DateTimeField(auto_now=True)
+    expiration_date = models.DateField()
+    discount_type = models.CharField(choices=(("PERCENTAGE", "PERCENTAGE"), ("FIXED", "FIXED")), max_length=12)
+
+    def __str__(self):
+        return f'Coupon - {self.coupon_code} - {self.discount_type} - {self.discount} expires {self.expiration_date}'
 
 
 

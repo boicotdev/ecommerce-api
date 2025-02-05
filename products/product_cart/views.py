@@ -1,4 +1,5 @@
 from rest_framework.views import APIView, Response
+from django.db import transaction
 from rest_framework import status
 from products.models import  Cart, Product, ProductCart
 from products.serializers import ProductCartSerializer
@@ -8,22 +9,56 @@ from users.models import User
 #add a new product to cart
 class ProductCartCreateView(APIView):
     def post(self, request):
-        cart_id = request.data.get("cart", None)
-        product_id = request.data.get("product", None)
-        product_quantity = request.data.get("quantity", None)
+        cart_id = request.data.get("cart")
+        products = request.data.get("products", [])
 
-        #check if required fields are fulfilled
-        if not cart_id or not product_id or not product_quantity:
-            return Response({"message": "All fields are required"}, status = status.HTTP_400_BAD_REQUEST)
+        # Validación de campos obligatorios
+        if not cart_id or not products:
+            return Response({"message": "All fields are required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
-            cart = Cart.objects.get(pk = cart_id)
-            product = Product.objects.get(pk = product_id)
-            serializer = ProductCartSerializer(data = request.data)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status = status.HTTP_201_CREATED)
-            return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
+            cart = Cart.objects.get(pk=cart_id)
+        except Cart.DoesNotExist:
+            return Response(
+                {"message": "Cart not found"},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        try:
+            # Recuperar los productos en una sola consulta
+            product_skus = [product["sku"] for product in products]
+            products_db = Product.objects.filter(sku__in=product_skus)
+            product_map = {product.sku: product for product in products_db}
+
+            # Verificar que todos los SKUs sean válidos
+            missing_skus = set(product_skus) - set(product_map.keys())
+            if missing_skus:
+                return Response(
+                    {"message": f"Products not found for SKUs: {', '.join(missing_skus)}"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            # Crear ProductCart en una transacción atómica
+            with transaction.atomic():
+                product_carts = []
+                for product_data in products:
+                    sku = product_data["sku"]
+                    quantity = product_data.get("quantity", 1)
+                    product = product_map[sku]
+
+                    product_cart = ProductCart.objects.create(
+                        cart=cart, product=product, quantity=quantity
+                    )
+                    product_carts.append(product_cart)
+
+                serializer = ProductCartSerializer(product_carts, many=True)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            return Response(
+                {"message": f"An error occurred: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
 
         #handling exceptions
         except Cart.DoesNotExist:
@@ -31,8 +66,7 @@ class ProductCartCreateView(APIView):
                                                                 status = status.HTTP_400_BAD_REQUEST)
 
         except Product.DoesNotExist:
-            return Response({"message": f"Product with ID {product_id} doesn't exists."},
-                                                                status = status.HTTP_400_BAD_REQUEST)
+            return Response({"message": f"Product doesn't exists."}, status = status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_400_BAD_REQUEST)
