@@ -7,7 +7,9 @@ from .views import (
     ProductDetailsView,
     ProductUpdateView,
     ProductRemoveView,
-    CouponsCreateView
+    CouponsCreateView,
+    CouponUpdateView,
+    CouponDeleteView, CouponsAdminRetrieveView,
 
 )
 from products.categories.views import (
@@ -74,7 +76,10 @@ urlpatterns = [
     path("customer/shipment/create/", CreateShipmentView.as_view()), #create a new shipment
     path("payment/preferences/", CreatePaymentPreference.as_view()),
     path("process_payment/", MercadoPagoPaymentView.as_view()),
-
+    #---------------------------- Coupons endpoints -----------------------
+    path("coupons/", CouponsAdminRetrieveView.as_view()), #retrieve all coupons available on the shop
     path("coupons/create/", CouponsCreateView.as_view()), #create a new coupon
+    path("coupons/update/", CouponUpdateView.as_view()), #update a single coupon
+    path("coupons/delete/", CouponDeleteView.as_view()) #delete a single coupon
 
 ]

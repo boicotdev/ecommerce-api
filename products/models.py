@@ -121,7 +121,7 @@ class Coupon(models.Model):
     discount_type = models.CharField(choices=(("PERCENTAGE", "PERCENTAGE"), ("FIXED", "FIXED")), max_length=12)
 
     def __str__(self):
-        return f'Coupon - {self.coupon_code} - {self.discount_type} - {self.discount} expires {self.expiration_date}'
+        return f'{self.coupon_code} - {self.discount_type} - {self.discount} expires {self.expiration_date}'
 
 
 

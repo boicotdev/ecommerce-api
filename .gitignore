@@ -73,3 +73,5 @@ pip-delete-this-directory.txt
 *.mp3
 /static/media/*
 /media/*
+
+README.md
