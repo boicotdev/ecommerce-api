@@ -1,8 +1,6 @@
-from rest_framework.decorators import parser_classes
 from rest_framework.views import APIView, Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from .models import Category, Product, Coupon
 from .permissions import AdminPermissions
 from .serializers import (
@@ -51,6 +49,7 @@ class ProductCreateView(APIView):
         except Exception as e:
             print(str(e))
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 #retrieve all products
 class ProductListView(APIView):
@@ -111,6 +110,7 @@ class ProductUpdateView(APIView):
         except Exception as e:
             return Response({"message" : str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 #remove a single product
 class ProductRemoveView(APIView):
     def delete(self, request):
@@ -135,6 +135,7 @@ class ProductRemoveView(APIView):
 class CouponsCreateView(APIView):
     permission_classes = [AdminPermissions]
     def post(self, request):
+        print(request.data)
         coupon_code = request.data.get('coupon_code', None)
         discount = request.data.get('discount', None)
         discount_type = request.data.get('discount_type', None)
@@ -171,14 +172,14 @@ class CouponsAdminRetrieveView(APIView):
 
 
 class CouponUpdateView(APIView):
-    #permission_classes = [AdminPermissions]
+    permission_classes = [AdminPermissions]
     def put(self, request):
-        coupon_code = request.data.get("coupon_code", None)
-
-        if not coupon_code:
-            return Response({'message': 'Coupon code is required'}, status = status.HTTP_400_BAD_REQUEST)
+        coupon_id = request.data.get("coupon_id", None)
+        print(request.data)
+        if not coupon_id:
+            return Response({'message': 'Coupon ID is required'}, status = status.HTTP_400_BAD_REQUEST)
         try:
-            coupon = Coupon.objects.get(coupon_code = coupon_code)
+            coupon = Coupon.objects.get(pk = coupon_id)
             serializer = CouponSerializer(coupon, data= request.data, partial=True)
             if serializer.is_valid():
                 serializer.save()
@@ -186,14 +187,14 @@ class CouponUpdateView(APIView):
             return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
 
         except Coupon.DoesNotExist:
-            return Response({'message': f'Coupon code {coupon_code} not found!'})
+            return Response({'message': f'Coupon ID {coupon_id} not found!'})
         except Exception as e:
             return Response({'message': str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class CouponDeleteView(APIView):
     permission_classes = [AdminPermissions]
-    def delete(self, request):
+    def post(self, request):
         coupon_code = request.data.get("coupon_code", None)
 
         if not coupon_code:

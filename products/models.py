@@ -14,7 +14,7 @@ class Product(models.Model):
     description = models.TextField(max_length=1024)
     price = models.FloatField()
     stock = models.IntegerField(default=1)
-    category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    category = models.ForeignKey(Category, null= True, on_delete=models.SET_NULL)
     rank = models.IntegerField(default=0)
     recommended = models.BooleanField(default=False)
     best_seller = models.BooleanField(default=False)
