@@ -105,7 +105,7 @@ class Payment(models.Model):
     )
 
     order = models.OneToOneField(Order, on_delete=models.CASCADE)
-    payment_amount = models.FloatField(2)
+    payment_amount = models.FloatField(verbose_name="payment_amount")
     payment_date = models.DateTimeField(auto_created=True)
     payment_method = models.CharField(max_length=15, choices= PAYMENT_METHODS)
     payment_status = models.CharField(max_length=15, choices= PAYMENT_STATUS)
@@ -118,7 +118,13 @@ class Coupon(models.Model):
     discount = models.IntegerField()
     creation_date = models.DateTimeField(auto_now=True)
     expiration_date = models.DateField()
+    is_active = models.BooleanField(default=True)
     discount_type = models.CharField(choices=(("PERCENTAGE", "PERCENTAGE"), ("FIXED", "FIXED")), max_length=12)
+
+    def is_valid(self):
+        from django.utils.timezone import now
+        current_date = now().date()
+        return self.is_active and self.expiration_date > current_date
 
     def __str__(self):
         return f'{self.coupon_code} - {self.discount_type} - {self.discount} expires {self.expiration_date}'
