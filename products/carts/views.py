@@ -1,8 +1,11 @@
 from rest_framework.views import APIView, Response
 from rest_framework import status
-from products.models import Cart
+from products.models import Cart, Product
 from users.models import User
-from products.serializers import  CartSerializer
+from products.serializers import  (
+    CartSerializer,
+    ProductCartSerializer
+)
 
 
 #create order
@@ -11,6 +14,7 @@ class CartCreateView(APIView):
         user = request.data.get("user", None)
         name = request.data.get("name", None)
         description = request.data.get("description", None)
+        print(request.data)
 
         if not user or not name or not description:
             return Response({"message": "All fields are required!"}, status = status.HTTP_400_BAD_REQUEST)
@@ -19,7 +23,7 @@ class CartCreateView(APIView):
         try:
             cart = Cart.objects.get(name = name)
             if cart:
-                return Response({"message": f"Order with name {name} already exists!"})
+                return Response({"message": f"Cart with name {name} already exists!"})
         except Cart.DoesNotExist:
             serializer = CartSerializer(data=request.data)
             if serializer.is_valid():
@@ -31,8 +35,22 @@ class CartCreateView(APIView):
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-#retrieve all cars
-
+class CartItemCreateView(APIView):
+    def post(self, request):
+        data = request.data.get("data", None)
+        cart_id = data['cart_id']
+        cart_items = data['items']
+        try:
+            cart = Cart.objects.get(name=cart_id)
+            serializer = ProductCartSerializer(data=cart_items, context={'cart': cart}, many=True)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        except Cart.DoesNotExist:
+            return Response({'message': f'Cart with name {cart_id} does not exists'}, status= status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'message': str(e)}, status= status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 #retrieve carts per user
 class CartUserListView(APIView):

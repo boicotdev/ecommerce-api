@@ -205,27 +205,36 @@ class CouponDeleteView(APIView):
             return Response({'message': f'Coupon deleted successfully.'}, status = status.HTTP_204_NO_CONTENT)
 
         except Coupon.DoesNotExist:
-            return Response({'message': f'Coupon code {coupon_code} not found!'})
+            return Response({'message': f'Coupon code {coupon_code} not found!'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'message': str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-#check if a given coupon code is valid
 class CouponCodeCheckView(APIView):
     """
-    pass
+    Validates a given discount coupon and returns the applicable discount.
+
+    If the discount type is "FIXED", the function returns the total discount amount.
+    If the discount type is "PERCENTAGE", it returns the percentage discount.
+
+    Returns:
+        dict: A dictionary containing:
+            - 'discount' (str): The discount value (amount or percentage).
+            - 'valid' (bool): Indicates whether the coupon is valid.
+            - 'type' (str): Indicates the discount type
     """
+
     def post(self, request):
         coupon_code = request.data.get("coupon_code", None)
-
         if not coupon_code:
             return Response({'message': 'Coupon code is required'}, status=status.HTTP_400_BAD_REQUEST)
         try:
             coupon = Coupon.objects.get(coupon_code=coupon_code)
-            coupon.delete()
-            return Response({'message': f'Coupon deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
+            if coupon.is_valid():
+                return Response({'valid': True, 'type':coupon.discount_type, 'discount': coupon.discount}, status=status.HTTP_200_OK)
+            return Response({'valid': False, 'error': 'Cupón expirado o inactivo'}, status=status.HTTP_400_BAD_REQUEST)
 
         except Coupon.DoesNotExist:
-            return Response({'message': f'Coupon code {coupon_code} not found!'})
+            return Response({'message': f'Coupon code {coupon_code} not found!'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

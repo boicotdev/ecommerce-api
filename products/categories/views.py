@@ -56,7 +56,6 @@ class CategoryUpdateView(APIView):
 class CategoryRemoveView(APIView):
     def post(self, request):
         category_id = request.data.get("id", None)
-        print(request.data)
         if not category_id:
             return Response({"message": "Category name was required"}, status = status.HTTP_400_BAD_REQUEST)
         try:
@@ -64,7 +63,7 @@ class CategoryRemoveView(APIView):
             category.delete()
             return Response({"message": "Category was deleted"}, status = status.HTTP_204_NO_CONTENT)
         except Category.DoesNotExist:
-            return Response({"message": f"Category with name {category_id} doesn't exists."}, status = status.HTTP_404_NOT_FOUND)
+            return Response({"message": f"Category with ID {category_id} doesn't exists."}, status = status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 

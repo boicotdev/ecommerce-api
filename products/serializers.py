@@ -1,4 +1,6 @@
 from rest_framework.serializers import ModelSerializer
+
+from users.models import User
 from .models import (
     Product,
     ProductCart,
@@ -26,7 +28,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ['name', 'price', 'sku', 'description', 'stock', 'category_id',
+        fields = ['id', 'name', 'price', 'sku', 'description', 'stock', 'category_id',
                   'recommended', 'best_seller', 'main_image', 'category']
 
 class ProductReviewSerializer(ModelSerializer):
@@ -34,21 +36,37 @@ class ProductReviewSerializer(ModelSerializer):
         model = ProductReview
         fields ='__all__'
 
-class ProductCartSerializer(ModelSerializer):
-    """
-    Represents a `ProductCart` item
-    """
 
+
+class UserDetailsSerializer(ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['id', 'first_name', 'last_name', 'address']
+
+
+class ProductCartSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductCart
-        fields = '__all__'
-        depth = 2
+        fields = ['cart', 'product', 'quantity']
+        extra_kwargs = {'cart': {'read_only': True}}  # Si no quieres que venga en la petición
+
+    def create(self, validated_data):
+        # Supongamos que asignas el cart desde el contexto
+        cart = self.context.get('cart')
+        if not cart:
+            raise serializers.ValidationError("No se pudo obtener el carrito.")
+        validated_data['cart'] = cart
+        return super().create(validated_data)
+
+
 
 class OrderSerializer(ModelSerializer):
+    user = UserDetailsSerializer()
     class Meta:
         model = Order
-        fields = '__all__'
-        depth = 1
+        fields = ['id', 'user', 'creation_date', 'status']
+
+
 
 
 class OrderProductSerializer(ModelSerializer):
@@ -65,6 +83,7 @@ class CartSerializer(ModelSerializer):
     class Meta:
         model = Cart
         fields = '__all__'
+
 
 class ShipmentSerializer(ModelSerializer):
     class Meta:
