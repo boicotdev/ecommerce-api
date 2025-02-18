@@ -10,8 +10,8 @@ class OrderCreateView(APIView):
     def post(self, request):
         check_status_list = ["PENDING", "DELIVERED", "CANCELLED", "APPROVED"]
         status_order = request.data.get("status", None)
-        user_id = request.data.get("user")
-
+        user_id = request.data.get("user", None)['id']
+    
         #check if required fields are fulfilled
         if not user_id or not status_order:
             return Response({"message": "All fields are required"}, status = status.HTTP_400_BAD_REQUEST)
