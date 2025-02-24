@@ -73,7 +73,7 @@ class CreatePaymentPreference(APIView):
                 order_product = OrderProduct.objects.create(order=order, product=product,
                                                             price=item['unit_price'], quantity=item['quantity'])
                 order_product.save()
-            return Response(preference_response['response'], status=status.HTTP_201_CREATED)
+            return Response({'order': order.pk, 'preference_data':preference_response['response']}, status=status.HTTP_201_CREATED)
         else:
             return Response({'detail': 'Error creating preference!'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -131,11 +131,11 @@ class MercadoPagoPaymentView(APIView):
 #cart details
 class PaymentDetailsViewView(APIView):
     def get(self, request):
-        payment_id = request.query_params.get("payment", None)
-        if not  payment_id:
+        order_id = request.query_params.get("order", None)
+        if not  order_id:
             return Response({'message': 'Payment ID is required'}, status = status.HTTP_400_BAD_REQUEST)
         try:
-            payment = Payment.objects.get(pk = payment_id)
+            payment = Payment.objects.get(order = order_id)
             serializer = PaymentSerializer(payment, many=False)
             #if serializer.is_valid():
             return Response(data=serializer.data, status = status.HTTP_200_OK)
@@ -150,9 +150,9 @@ class PaymentCreateView(APIView):
     def post(self, request):
         order_id = request.data.get('order_id', None)
         payment_amount = request.data.get('payment_amount', None)
+        payment_date = request.data.get('payment_date', None)
         payment_method = request.data.get('payment_method', None)
         payment_status = request.data.get('payment_status', None)
-        payment_date = request.data.get('payment_date', None)
         print(request.data)
 
         if not all([order_id, payment_date, payment_amount, payment_method, payment_status]):
@@ -160,13 +160,21 @@ class PaymentCreateView(APIView):
 
         try:
             order = Order.objects.get(id=order_id)
-            #order.status = "DELIVERED" #change the order status
-            #order.save()
-            payment = Payment.objects.create(order_id=30, payment_date=payment_date, payment_amount=payment_amount,
-                                             payment_method=payment_method, payment_status=payment_status)
+            #check if exist a payment related to order_id
+            if Payment.objects.filter(order=order_id).exists():
+                return Response({'message': 'Order was payed successfully'}, status = status.HTTP_400_BAD_REQUEST)
+            order.status = "PENDING" #change the order status to pend delivery
+            order.save()
+            payment = Payment.objects.create(
+                order=order,
+                payment_date=payment_date,
+                payment_amount=payment_amount,
+                payment_method=payment_method,
+                payment_status=payment_status
+            )
             payment.save()
             serializer = PaymentSerializer(payment, many=False)
-            return Response(serializer.data, status = status.HTTP_200_OK)
+            return Response(serializer.data, status = status.HTTP_201_CREATED)
         except Order.DoesNotExist:
             return Response({'message': f'Order with ID {order_id} not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
