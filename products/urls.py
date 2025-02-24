@@ -1,6 +1,7 @@
 from django.urls import path
 
-from .payments.views import CreateShipmentView, CreatePaymentPreference, MercadoPagoPaymentView
+from .payments.views import CreateShipmentView, CreatePaymentPreference, MercadoPagoPaymentView, PaymentDetailsViewView, \
+    PaymentCreateView
 from .views import (
     ProductCreateView,
     ProductListView,
@@ -21,7 +22,7 @@ from products.categories.views import (
 from products.carts.views import (
     CartCreateView,
     CartUserListView,
-    CartUserDelete, CartItemCreateView,
+    CartUserDelete, CartItemCreateView, CartExistView,
 )
 
 from products.orders.views import (
@@ -56,6 +57,7 @@ urlpatterns = [
     path("carts/items/create/", CartItemCreateView.as_view()), #cart item create view
     path("orders/carts/",  CartUserListView.as_view()), #list all carts of some user
     path("orders/carts/delete/", CartUserDelete.as_view()), #remove a unique cart
+    path("orders/carts/check/", CartExistView.as_view()), #remove a unique cart
 
     #------------------------ orders endpoints --------------------------
     path("carts/orders/create/", OrderCreateView.as_view()), #create a new user order
@@ -82,6 +84,11 @@ urlpatterns = [
     path("coupons/validate/", CouponCodeCheckView.as_view()), #check if a coupon is valid
     path("coupons/create/", CouponsCreateView.as_view()), #create a new coupon
     path("coupons/update/", CouponUpdateView.as_view()), #update a single coupon
-    path("coupons/delete/", CouponDeleteView.as_view()) #delete a single coupon
+    path("coupons/delete/", CouponDeleteView.as_view()), #delete a single coupon
+
+
+    #--------------------------------- Payments ---------------------------
+    path("orders/carts/payments/", PaymentDetailsViewView.as_view()),
+    path("payment/process/", PaymentCreateView.as_view())
 
 ]

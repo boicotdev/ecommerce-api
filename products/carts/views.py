@@ -14,7 +14,6 @@ class CartCreateView(APIView):
         user = request.data.get("user", None)
         name = request.data.get("name", None)
         description = request.data.get("description", None)
-        print(request.data)
 
         if not user or not name or not description:
             return Response({"message": "All fields are required!"}, status = status.HTTP_400_BAD_REQUEST)
@@ -23,7 +22,7 @@ class CartCreateView(APIView):
         try:
             cart = Cart.objects.get(name = name)
             if cart:
-                return Response({"message": f"Cart with name {name} already exists!"})
+                return Response({"message": f"Cart with name {name} already exists!"}, status = status.HTTP_400_BAD_REQUEST)
         except Cart.DoesNotExist:
             serializer = CartSerializer(data=request.data)
             if serializer.is_valid():
@@ -34,6 +33,19 @@ class CartCreateView(APIView):
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+#cart details
+class CartExistView(APIView):
+    def get(self, request):
+        cart_name = request.query_params.get("cart", None)
+        print(cart_name)
+        if not  cart_name:
+            return Response({'message': 'Cart ID is required'}, status = status.HTTP_400_BAD_REQUEST)
+        try:
+            cart = Cart.objects.get(name = cart_name)
+            return Response({'exists': True}, status = status.HTTP_200_OK)
+        except Cart.DoesNotExist:
+            return Response({'exists': False}, status = status.HTTP_404_NOT_FOUND)
 
 class CartItemCreateView(APIView):
     def post(self, request):
@@ -48,7 +60,7 @@ class CartItemCreateView(APIView):
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
         except Cart.DoesNotExist:
-            return Response({'message': f'Cart with name {cart_id} does not exists'}, status= status.HTTP_400_BAD_REQUEST)
+            return Response({"message": f"Cart with ID {cart_id} does'nt found"}, status= status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'message': str(e)}, status= status.HTTP_500_INTERNAL_SERVER_ERROR)
 
@@ -73,7 +85,6 @@ class CartUserListView(APIView):
 
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
-
 
 #delete cart
 class CartUserDelete(APIView):

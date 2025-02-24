@@ -11,7 +11,7 @@ class OrderCreateView(APIView):
         check_status_list = ["PENDING", "DELIVERED", "CANCELLED", "APPROVED"]
         status_order = request.data.get("status", None)
         user_id = request.data.get("user", None)['id']
-    
+
         #check if required fields are fulfilled
         if not user_id or not status_order:
             return Response({"message": "All fields are required"}, status = status.HTTP_400_BAD_REQUEST)
@@ -126,7 +126,7 @@ class OrderDashboardDetailsView(APIView):
         total = 0
         for obj in objs:
             total += obj.price * obj.quantity
-        return total #obj.price * obj.quantity or 5000
+        return total
 
     def get(self, request):
         order_id = request.query_params.get("order", None)
