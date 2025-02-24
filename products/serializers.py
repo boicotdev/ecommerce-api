@@ -1,3 +1,5 @@
+from logging import exception
+
 from rest_framework.serializers import ModelSerializer
 
 from users.models import User
@@ -60,11 +62,21 @@ class ProductCartSerializer(serializers.ModelSerializer):
 
 
 
-class OrderSerializer(ModelSerializer):
+class OrderSerializer(serializers.ModelSerializer):
+    total = serializers.SerializerMethodField()
+
+    def get_total(self, order):
+        try:
+            order_products = OrderProduct.objects.filter(order=order)
+            total = sum(p.price * p.quantity for p in order_products)
+            return total
+        except Exception as e:
+            return 0  # Devuelve 0 en caso de error para evitar que falle la serialización
+
     user = UserDetailsSerializer()
     class Meta:
         model = Order
-        fields = ['id', 'user', 'creation_date', 'status']
+        fields = ['id', 'user', 'creation_date', 'status', 'total']
 
 
 
@@ -118,7 +130,7 @@ class PaymentSerializer(ModelSerializer):
 
     class Meta:
         model = Payment
-        fields = ['order_id', 'id']
+        fields = '__all__'
         depth = 1
 
 class CouponSerializer(ModelSerializer):
