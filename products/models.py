@@ -109,9 +109,10 @@ class Payment(models.Model):
     payment_date = models.DateTimeField(auto_created=True)
     payment_method = models.CharField(max_length=15, choices= PAYMENT_METHODS)
     payment_status = models.CharField(max_length=15, choices= PAYMENT_STATUS)
+    #payment_has_discount = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.order} - {self.payment_status}"
+        return f"{self.id} - {self.order} - {self.payment_status}"
 
 class Coupon(models.Model):
     coupon_code = models.CharField(max_length=15)

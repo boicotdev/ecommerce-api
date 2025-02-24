@@ -118,7 +118,7 @@ class PaymentSerializer(ModelSerializer):
 
     class Meta:
         model = Payment
-        fields = '__all__'
+        fields = ['order_id', 'id']
         depth = 1
 
 class CouponSerializer(ModelSerializer):
