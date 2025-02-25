@@ -1,6 +1,6 @@
 from rest_framework.views import APIView, Response
 from rest_framework import status
-from products.models import Cart, Product
+from products.models import Cart, Product, ProductCart
 from users.models import User
 from products.serializers import  (
     CartSerializer,
@@ -38,7 +38,6 @@ class CartCreateView(APIView):
 class CartExistView(APIView):
     def get(self, request):
         cart_name = request.query_params.get("cart", None)
-        print(cart_name)
         if not  cart_name:
             return Response({'message': 'Cart ID is required'}, status = status.HTTP_400_BAD_REQUEST)
         try:
@@ -47,22 +46,47 @@ class CartExistView(APIView):
         except Cart.DoesNotExist:
             return Response({'exists': False}, status = status.HTTP_404_NOT_FOUND)
 
+
 class CartItemCreateView(APIView):
     def post(self, request):
-        data = request.data.get("data", None)
-        cart_id = data['cart_id']
-        cart_items = data['items']
+        data = request.data.get("data")
+
+        # Validar que `data` contenga `cart_id` y `items`
+        if not data or "cart_id" not in data or "items" not in data:
+            return Response({'message': 'You need to provide a valid cart_id and items list'},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        cart_id = data.get('cart_id')
+        cart_items = data["items"]
+
+        # Validar que `items` sea una lista válida
+        if not isinstance(cart_items, list) or len(cart_items) == 0:
+            return Response({'message': 'Items must be a non-empty list'}, status=status.HTTP_400_BAD_REQUEST)
+
         try:
             cart = Cart.objects.get(name=cart_id)
-            serializer = ProductCartSerializer(data=cart_items, context={'cart': cart}, many=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            updated_items = []
+
+            for item in cart_items:
+                # Asegurar que cada item incluya `cart`
+                item_data = {"cart": cart.id, "product": item["product"], "quantity": item["quantity"]}
+                product = ProductCart.objects.filter(product=item_data['product']).first()
+
+                serializer = ProductCartSerializer(data=item_data)
+
+                if serializer.is_valid():
+                    saved_item = serializer.save()
+                    updated_items.append(ProductCartSerializer(saved_item).data)
+                else:
+                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+            return Response(updated_items, status=status.HTTP_201_CREATED)
+
         except Cart.DoesNotExist:
-            return Response({"message": f"Cart with ID {cart_id} does'nt found"}, status= status.HTTP_404_NOT_FOUND)
+            return Response({"message": f"Cart with ID {cart_id} not found"}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'message': str(e)}, status= status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 #retrieve carts per user
 class CartUserListView(APIView):

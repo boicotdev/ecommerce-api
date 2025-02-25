@@ -82,10 +82,9 @@ class ProductCartUserList(APIView):
 
         try:
             user = User.objects.get(pk = user_id)
-            cart = Cart.objects.filter(pk = cart_id, user = user).first()
+            cart = Cart.objects.filter(name = cart_id, user = user).first()
             products = ProductCart.objects.filter(cart = cart)
             serializer = ProductCartSerializer(products, many = True)
-            print(products)
             return Response(serializer.data, status.HTTP_200_OK)
 
 
