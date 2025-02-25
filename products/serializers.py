@@ -1,5 +1,3 @@
-from logging import exception
-
 from rest_framework.serializers import ModelSerializer
 
 from users.models import User
@@ -33,11 +31,11 @@ class ProductSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'price', 'sku', 'description', 'stock', 'category_id',
                   'recommended', 'best_seller', 'main_image', 'category']
 
+
 class ProductReviewSerializer(ModelSerializer):
     class Meta:
         model = ProductReview
         fields ='__all__'
-
 
 
 class UserDetailsSerializer(ModelSerializer):
@@ -49,16 +47,25 @@ class UserDetailsSerializer(ModelSerializer):
 class ProductCartSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductCart
-        fields = ['cart', 'product', 'quantity']
-        extra_kwargs = {'cart': {'read_only': True}}  # Si no quieres que venga en la petición
+        fields = ['id', 'cart', 'product', 'quantity']
 
     def create(self, validated_data):
-        # Supongamos que asignas el cart desde el contexto
-        cart = self.context.get('cart')
-        if not cart:
-            raise serializers.ValidationError("No se pudo obtener el carrito.")
-        validated_data['cart'] = cart
-        return super().create(validated_data)
+        """
+        Si el producto ya está en el carrito, actualiza la cantidad en lugar de crear un nuevo objeto.
+        """
+        product = validated_data.get('product')
+        quantity = validated_data.get('quantity', 0)
+
+        # Buscar si el producto ya está en el carrito
+        existing_item = ProductCart.objects.filter(product=product).first()
+
+        if existing_item:
+            existing_item.quantity += quantity  # Sumar la nueva cantidad
+            existing_item.save()
+            return existing_item  # Retornar el objeto actualizado
+        else:
+            return super().create(validated_data)  # Crear un nuevo registro si no existe
+
 
 
 
@@ -77,8 +84,6 @@ class OrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['id', 'user', 'creation_date', 'status', 'total']
-
-
 
 
 class OrderProductSerializer(ModelSerializer):
@@ -132,6 +137,7 @@ class PaymentSerializer(ModelSerializer):
         model = Payment
         fields = '__all__'
         depth = 1
+
 
 class CouponSerializer(ModelSerializer):
     class Meta:

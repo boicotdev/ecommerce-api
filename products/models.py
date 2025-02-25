@@ -34,7 +34,7 @@ class Cart(models.Model):
     creation_date = models.DateTimeField(verbose_name="Cart creation", auto_now= True)
 
     def __str__(self):
-        return self.name
+        return f"{self.name}/{self.id}"
 
 class ProductCart(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
