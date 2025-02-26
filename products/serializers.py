@@ -68,22 +68,35 @@ class ProductCartSerializer(serializers.ModelSerializer):
 
 
 
+class PaymentSerializer(ModelSerializer):
+    """
+    Serialize a `Payment` object and handle all logic to create a payment register
+    ----
+    """
+
+    class Meta:
+        model = Payment
+        fields = '__all__'
+        depth = 1
+
 
 class OrderSerializer(serializers.ModelSerializer):
     total = serializers.SerializerMethodField()
 
-    def get_total(self, order):
+    @staticmethod
+    def get_total(order):
         try:
             order_products = OrderProduct.objects.filter(order=order)
             total = sum(p.price * p.quantity for p in order_products)
-            return total
+            return total + 5000
         except Exception as e:
             return 0  # Devuelve 0 en caso de error para evitar que falle la serialización
 
     user = UserDetailsSerializer()
+    payment = PaymentSerializer()
     class Meta:
         model = Order
-        fields = ['id', 'user', 'creation_date', 'status', 'total']
+        fields = ['id', 'user', 'payment', 'creation_date', 'status', 'total']
 
 
 class OrderProductSerializer(ModelSerializer):
@@ -126,17 +139,6 @@ class ShipmentSerializer(ModelSerializer):
             )
         return value
 
-
-class PaymentSerializer(ModelSerializer):
-    """
-    Serialize a `Payment` object and handle all logic to create a payment register
-    ----
-    """
-
-    class Meta:
-        model = Payment
-        fields = '__all__'
-        depth = 1
 
 
 class CouponSerializer(ModelSerializer):

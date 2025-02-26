@@ -1,3 +1,4 @@
+from django.core.validators import RegexValidator
 from django.db import models
 from users.models import User
 
@@ -45,16 +46,21 @@ class ProductCart(models.Model):
         return f"( Product - {self.product} | Cart - {self.cart.name} )"
 
 class Order(models.Model):
-    #FIXME change status tuple
     STATUS = (
+        ("PENDING", "PENDING"),
+        ("PROCESSING", "PROCESSING"),
+        ("SHIPPED", "SHIPPED"),
+        ("OUT_FOR_DELIVERY", "OUT_FOR_DELIVERY"),
         ("DELIVERED", "DELIVERED"),
         ("CANCELLED", "CANCELLED"),
-        ("PENDING", "PENDING"),
+        ("RETURNED", "RETURNED"),
+        ("FAILED", "FAILED"),
+        ("ON_HOLD", "ON_HOLD"),
     )
 
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     creation_date = models.DateField(auto_now=True)
-    status = models.CharField(max_length=12, choices=STATUS)
+    status = models.CharField(max_length=20, choices=STATUS, default=STATUS[0])
 
     def __str__(self):
         return f"(Order: {self.pk} | Status - {self.status} | Created - {self.creation_date} | User - {self.user})"
@@ -79,17 +85,61 @@ class ProductReview(models.Model):
 
 class Shipment(models.Model):
     """
-    Create a new shipment object in the shop
+    Model to store shipment details for an order
     """
-    customer = models.ForeignKey(User, on_delete=models.CASCADE)
-    order = models.OneToOneField(Order, on_delete=models.CASCADE)
-    shipment_date = models.DateTimeField(auto_now=True)
-    shipment_address = models.CharField(max_length=50)
-    shipment_city = models.CharField(max_length=30)
-    shipment_date_post_code = models.CharField(max_length=10)
+
+    # Relación con usuario y orden
+    customer = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="shipments"
+    )
+    order = models.OneToOneField(
+        Order,
+        on_delete=models.CASCADE,
+        related_name="shipment"
+    )
+
+    # Información de envío
+    shipment_date = models.DateTimeField(auto_now_add=True)  # Fecha fija al crear
+    shipment_address = models.CharField(max_length=255)  # Más espacio para direcciones largas
+    shipment_city = models.CharField(max_length=50)  # Ciudades pueden ser más largas
+
+    # Validación para códigos postales (solo números, 4-10 caracteres)
+    postal_code_validator = RegexValidator(
+        regex=r'^\d{4,10}$',
+        message="El código postal debe contener entre 4 y 10 dígitos."
+    )
+    shipment_date_post_code = models.CharField(
+        max_length=10,
+        validators=[postal_code_validator]
+    )
+
+    # Estado del envío
+    PENDING = "PENDING"
+    SHIPPED = "SHIPPED"
+    DELIVERED = "DELIVERED"
+    CANCELLED = "CANCELLED"
+
+    SHIPMENT_STATUS_CHOICES = [
+        (PENDING, PENDING),
+        (SHIPPED, SHIPPED),
+        (DELIVERED, DELIVERED),
+        (CANCELLED, CANCELLED),
+    ]
+
+    status = models.CharField(
+        max_length=10,
+        choices=SHIPMENT_STATUS_CHOICES,
+        default=PENDING
+    )
+
+    # Fechas de creación y actualización
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Shipment to ({self.shipment_address} - {self.shipment_city})"
+        return f"Shipment {self.id} - {self.get_status_display()} ({self.shipment_address} - {self.shipment_city})"
 
 class Payment(models.Model):
     PAYMENT_METHODS = (
@@ -99,16 +149,20 @@ class Payment(models.Model):
     )
 
     PAYMENT_STATUS = (
-        ("APPROVED", "APPROVED"),
-        ("DECLINED", "DECLINED"),
-        ("WAITING", "WAITING")
+        ("APPROVED", "APPROVED"),  # approved
+        ("PENDING", "PENDING"),  # pending
+        ("IN_PROCESS", "IN_PROCESS"),  # in_process
+        ("REJECTED", "REJECTED"),  # rejected
+        ("CANCELED", "CANCELED"),  # cancelled
+        ("REFUNDED", "REFUNDED"),  # refunded
+        ("CHARGED_BACK", "CHARGED_BACK"),  # charged_back
     )
 
     order = models.OneToOneField(Order, on_delete=models.CASCADE)
     payment_amount = models.FloatField(verbose_name="payment_amount")
     payment_date = models.DateTimeField(auto_created=True)
     payment_method = models.CharField(max_length=15, choices= PAYMENT_METHODS)
-    payment_status = models.CharField(max_length=15, choices= PAYMENT_STATUS)
+    payment_status = models.CharField(max_length=20, choices= PAYMENT_STATUS)
     #payment_has_discount = models.BooleanField(default=False)
 
     def __str__(self):
