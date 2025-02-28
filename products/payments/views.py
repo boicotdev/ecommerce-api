@@ -175,6 +175,7 @@ class MercadoPagoPaymentView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
+        print(request.data)
         sdk = mercadopago.SDK(MP_ACCESS_TOKEN)
         request_options = mercadopago.config.RequestOptions()
         request_options.custom_headers = {

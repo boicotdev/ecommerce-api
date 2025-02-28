@@ -29,7 +29,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'name', 'price', 'sku', 'description', 'stock', 'category_id',
-                  'recommended', 'best_seller', 'main_image', 'category']
+                  'recommended', 'best_seller', 'main_image', 'category', 'rank', 'score']
 
 
 class ProductReviewSerializer(ModelSerializer):
@@ -65,7 +65,6 @@ class ProductCartSerializer(serializers.ModelSerializer):
             return existing_item  # Retornar el objeto actualizado
         else:
             return super().create(validated_data)  # Crear un nuevo registro si no existe
-
 
 
 class PaymentSerializer(ModelSerializer):
