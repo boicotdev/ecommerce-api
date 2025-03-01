@@ -48,6 +48,7 @@ class ProductCartSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductCart
         fields = ['id', 'cart', 'product', 'quantity']
+        depth = 1
 
     def create(self, validated_data):
         """

@@ -70,11 +70,11 @@ class CreatePaymentPreference(APIView):
         if preference_response["status"] == 201:
             user = request.user
             cart = Cart.objects.filter(user=user).first()  # Obtener el carrito del usuario
-            pending_order = Order.objects.filter(user=user, status="PROCESSING").first()
+            pending_order = Order.objects.filter(user=user, status="PENDING").first()
 
             if not pending_order:
                 # Crear una nueva orden si no hay una pendiente
-                order = Order.objects.create(user=user, status="PROCESSING")
+                order = Order.objects.create(user=user, status="PENDING")
 
                 # Crear lista de objetos para insertar en la BD en una sola operación
                 order_products = []
@@ -175,7 +175,6 @@ class MercadoPagoPaymentView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, *args, **kwargs):
-        print(request.data)
         sdk = mercadopago.SDK(MP_ACCESS_TOKEN)
         request_options = mercadopago.config.RequestOptions()
         request_options.custom_headers = {
@@ -216,32 +215,14 @@ class MercadoPagoPaymentView(APIView):
             payment = payment_response.get("response", {})
 
             # Obtener la orden del usuario autenticado
-            order = Order.objects.filter(user=user).first()
-
+            order = Order.objects.filter(user=user, status="PENDING").first()
             if not order:
                 return Response({"error": "No se encontró una orden asociada al usuario"}, status=status.HTTP_404_NOT_FOUND)
-
-            # Create a Shipment instance
-            delivery = Shipment.objects.create(
-                customer=user,
-                order=order,
-                shipment_date=datetime.now(),
-                shipment_address=user.address,
-                shipment_city='Bogotá',
-                shipment_date_post_code='111101'
-            )
-
-            #Update the Product.stock
-            order_products = OrderProduct.objects.filter(order=order)
-
-            for p in order_products:
-                print(p.id)
 
             return Response(payment, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            print(request.data, 242)
-
+            print(e)
             return Response(
                 {"error": "Payment creation failed", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -267,6 +248,7 @@ class PaymentDetailsViewView(APIView):
 
 class PaymentCreateView(APIView):
     def post(self, request):
+        print(request.data)
         order_id = request.data.get('order_id', None)
         payment_amount = request.data.get('payment_amount', None)
         payment_date = request.data.get('payment_date', None)

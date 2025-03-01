@@ -1,7 +1,8 @@
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView, Response
 from django.db import transaction
 from rest_framework import status
-from products.models import  Cart, Product, ProductCart
+from products.models import Cart, Product, ProductCart, Order, OrderProduct
 from products.serializers import ProductCartSerializer
 from users.models import User
 
@@ -11,6 +12,7 @@ class ProductCartCreateView(APIView):
     def post(self, request):
         cart_id = request.data.get("cart")
         products = request.data.get("products", [])
+
 
         # Validación de campos obligatorios
         if not cart_id or not products:
@@ -94,7 +96,36 @@ class ProductCartUserList(APIView):
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
 #edit a product into a single cart
+class ProductCartHasChanged(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        items = request.data.get("items", None)
+        user = request.user
+
+        if not items:
+            return Response({'message': 'All fields are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            order = Order.objects.filter(user=user, status="PENDING").first()
+            order_products = OrderProduct.objects.filter(order=order)  # Filtrar todos los productos de la orden
+        except Order.DoesNotExist:
+            return Response({'changed': True, 'message': 'No active order found'}, status=status.HTTP_200_OK)
+
+        # Convertir los productos de la orden en un diccionario {product_id: quantity}
+        order_product_map = {op.product.id: op.quantity for op in order_products}
+
+        # Convertir los productos enviados en un diccionario {product_id: quantity}
+        request_product_map = {item["id"]: item["quantity"] for item in items}
+
+        # Comparar si las claves (productos) o los valores (cantidades) han cambiado
+        if order_product_map != request_product_map:
+            return Response({'changed': True}, status=status.HTTP_200_OK)
+
+        return Response({'changed': False}, status=status.HTTP_200_OK)
+
 
 #remove a product into a cart
 class ProductCartUserRemove(APIView):

@@ -1,5 +1,9 @@
 from rest_framework import serializers
+from rest_framework.serializers import ModelSerializer
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+
+from products.models import Order
+from products.serializers import OrderSerializer
 from .models import User, Comment
 
 
@@ -23,10 +27,17 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    orders = serializers.SerializerMethodField()
+
+    def get_orders(self, obj):
+        user = obj
+        count_orders = Order.objects.filter(user=user)
+        return len(count_orders)
+
     class Meta:
         model = User
         fields = ["id", 'username', 'email', 'password',
-                  'first_name', 'last_name', 'avatar', 'phone', 'address', 'rol', 'date_joined', 'is_staff', 'is_superuser']
+                  'first_name', 'last_name', 'avatar', 'phone', 'address', 'rol', 'date_joined', 'is_staff', 'is_superuser', 'orders']
         extra_kwargs = {
             'password': {'write_only': True}
         }

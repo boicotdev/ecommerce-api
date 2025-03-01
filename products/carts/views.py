@@ -64,21 +64,35 @@ class CartItemCreateView(APIView):
             return Response({'message': 'Items must be a non-empty list'}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
+            # Verificar si el carrito existe
             cart = Cart.objects.get(name=cart_id)
             updated_items = []
 
             for item in cart_items:
-                # Asegurar que cada item incluya `cart`
-                item_data = {"cart": cart.id, "product": item["product"], "quantity": item["quantity"]}
-                product = ProductCart.objects.filter(product=item_data['product']).first()
+                product_id = item.get("product")
+                quantity = item.get("quantity")
 
-                serializer = ProductCartSerializer(data=item_data)
+                if not product_id or not quantity:
+                    return Response({"message": "Each item must have a product and quantity"},
+                                    status=status.HTTP_400_BAD_REQUEST)
 
-                if serializer.is_valid():
-                    saved_item = serializer.save()
-                    updated_items.append(ProductCartSerializer(saved_item).data)
+                # Verificar si el producto existe
+                product = Product.objects.filter(pk=product_id).first()
+                if not product:
+                    return Response({"message": f"Product with ID {product_id} not found"},
+                                    status=status.HTTP_404_NOT_FOUND)
+
+                # Buscar si el producto ya está en el carrito
+                product_cart, created = ProductCart.objects.get_or_create(cart=cart, product=product)
+
+                if created:
+                    product_cart.quantity = quantity
                 else:
-                    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+                    product_cart.quantity += quantity  # Incrementa la cantidad si ya existe
+
+                product_cart.save()
+
+                updated_items.append(ProductCartSerializer(product_cart).data)
 
             return Response(updated_items, status=status.HTTP_201_CREATED)
 

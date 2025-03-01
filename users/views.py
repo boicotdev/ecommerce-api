@@ -120,7 +120,6 @@ class UserListView(APIView):
 
 class ClientUserListView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
-
     def get(self, request):
         try:
             users = User.objects.filter(rol="Cliente")
