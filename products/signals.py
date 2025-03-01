@@ -4,6 +4,7 @@ from .models import Payment, Order, OrderProduct, Product
 
 @receiver(post_save, sender=Payment)
 def update_order_and_stock(sender, instance, created, **kwargs):
+    delivery = 5000
     """
     Signal que actualiza el estado de la orden, calcula el total del pago y ajusta el stock
     cuando se confirma un pago.
@@ -19,8 +20,7 @@ def update_order_and_stock(sender, instance, created, **kwargs):
             )
 
             # Asignar el monto calculado al Payment y guardarlo
-            instance.payment_amount = total_payment_amount
-            print(instance)
+            instance.payment_amount = total_payment_amount + delivery
             instance.save()
 
             # Verificar que la orden aún está en estado "PENDING"

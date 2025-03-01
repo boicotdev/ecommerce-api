@@ -1,6 +1,7 @@
 from django.urls import path
 
-from .payments.views import CreateShipmentView, CreatePaymentPreference, MercadoPagoPaymentView, PaymentDetailsViewView, \
+from shipments.views import ShipmentCreateView, ShipmentListView, ShipmentUpdateView
+from .payments.views import CreatePaymentPreference, MercadoPagoPaymentView, PaymentDetailsViewView, \
     PaymentCreateView
 from .views import (
     ProductCreateView,
@@ -77,9 +78,9 @@ urlpatterns = [
     path("carts/products/remove/", ProductCartUserRemove.as_view()), #remove a product from a given cart
 
     #-------------------------- Shipments endpoints --------------------
-    path("customer/shipment/create/", CreateShipmentView.as_view()), #create a new shipment
-    path("payment/preferences/", CreatePaymentPreference.as_view()),
-    path("process_payment/", MercadoPagoPaymentView.as_view()),
+    path("orders/shipments/create/", ShipmentCreateView.as_view()), #create a new shipment
+    path("orders/shipments/", ShipmentListView.as_view()), #retrieve all shipments
+    path("orders/shipments/update/", ShipmentUpdateView.as_view()), #update a Shipment admin permissions are required
     #---------------------------- Coupons endpoints -----------------------
     path("coupons/", CouponsAdminRetrieveView.as_view()), #retrieve all coupons available on the shop
     path("coupons/validate/", CouponCodeCheckView.as_view()), #check if a coupon is valid
@@ -90,6 +91,7 @@ urlpatterns = [
 
     #--------------------------------- Payments ---------------------------
     path("orders/carts/payments/", PaymentDetailsViewView.as_view()),
-    path("payment/process/", PaymentCreateView.as_view())
-
+    path("payment/process/", PaymentCreateView.as_view()),
+    path("payment/preferences/", CreatePaymentPreference.as_view()),
+    path("process_payment/", MercadoPagoPaymentView.as_view()),
 ]
