@@ -116,16 +116,21 @@ class CartSerializer(ModelSerializer):
 
 
 class ShipmentSerializer(ModelSerializer):
+    customer = serializers.PrimaryKeyRelatedField(queryset=User.objects.all())
+    amount = serializers.SerializerMethodField()
+
+    def get_amount(self, obj):
+        try:
+            total = 0
+            order = obj.order
+            products = OrderProduct.objects.filter(order=order)
+            total += sum(item.price * item.quantity for item in products)
+            return total
+        except Exception as e:
+            return 0
     class Meta:
         model = Shipment
-        '''fields = [
-            "customer_id",
-            "order_id",
-            "shipment_address",
-            "shipment_city",
-            "shipment_date_post_code",
-        ]'''
-        fields = '__all__'
+        fields = ['id', 'order', 'shipment_address', 'shipment_date', 'shipment_city', 'shipment_date_post_code', 'status', 'customer', 'amount']
 
     def validate_customer_id(self, value):
         if not value:
