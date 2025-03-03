@@ -1,3 +1,6 @@
+import logging
+
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView
@@ -6,6 +9,7 @@ from rest_framework.response import Response
 from products.models import Shipment
 from products.serializers import ShipmentSerializer
 
+logger = logging.getLogger(__name__)
 
 class ShipmentCreateView(APIView):
     permission_classes = [IsAuthenticated]
@@ -37,7 +41,6 @@ class ShipmentCreateView(APIView):
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 class ShipmentListView(APIView):
     """
     Retrieve all shipments into the ecommerce
@@ -53,26 +56,24 @@ class ShipmentListView(APIView):
         except Exception as e:
             return Response({'message': str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
 class ShipmentUpdateView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
     """
     Update a single `Shipment` object, special permissions are required to access this view
     """
+
     def put(self, request):
-        shipment_id = request.data.get("shipment", None)
+        shipment_id = request.data.get("shipment")
         if not shipment_id:
-            return Response({'message': 'Shipment ID is missing, try again.'}, status = status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'Shipment ID is missing, try again.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            shipment = Shipment.objects.get(pk=shipment_id)
-            serializer = ShipmentSerializer(shipment, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save()
-                return Response(serializer.data, status = status.HTTP_200_OK)
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        except Shipment.DoesNotExist:
-            return Response({'message': f'Shipment with the given ID was\'nt found!'}, status = status.HTTP_404_NOT_FOUND)
+        shipment = get_object_or_404(Shipment, pk=shipment_id)
 
-        except Exception as e:
-            return Response({'message': str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+        serializer = ShipmentSerializer(shipment, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            logger.info(f"Shipment {shipment_id} updated successfully.")
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        logger.warning(f"Shipment update failed for ID {shipment_id}: {serializer.errors}")
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

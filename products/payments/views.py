@@ -192,7 +192,6 @@ class MercadoPagoPaymentView(APIView):
             return Response(payment, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            print(e)
             return Response(
                 {"error": "Payment creation failed", "details": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
@@ -218,7 +217,6 @@ class PaymentDetailsViewView(APIView):
 
 class PaymentCreateView(APIView):
     def post(self, request):
-        print(request.data)
         order_id = request.data.get('order_id', None)
         payment_amount = request.data.get('payment_amount', None)
         payment_date = request.data.get('payment_date', None)

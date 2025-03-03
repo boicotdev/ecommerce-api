@@ -42,7 +42,6 @@ from products.product_cart.views import (
     ProductCartCreateView, ProductCartUserList, ProductCartUserRemove, ProductCartHasChanged,
 )
 urlpatterns = [
-
     path("products/categories/create/", CategoryCreateView.as_view()), #create a new category
     path("products/create/", ProductCreateView.as_view()), #create a new product
     path("products/categories/", CategoryListView.as_view()), #list all categories
@@ -81,13 +80,13 @@ urlpatterns = [
     path("orders/shipments/create/", ShipmentCreateView.as_view()), #create a new shipment
     path("orders/shipments/", ShipmentListView.as_view()), #retrieve all shipments
     path("orders/shipments/update/", ShipmentUpdateView.as_view()), #update a Shipment admin permissions are required
+
     #---------------------------- Coupons endpoints -----------------------
     path("coupons/", CouponsAdminRetrieveView.as_view()), #retrieve all coupons available on the shop
     path("coupons/validate/", CouponCodeCheckView.as_view()), #check if a coupon is valid
     path("coupons/create/", CouponsCreateView.as_view()), #create a new coupon
     path("coupons/update/", CouponUpdateView.as_view()), #update a single coupon
     path("coupons/delete/", CouponDeleteView.as_view()), #delete a single coupon
-
 
     #--------------------------------- Payments ---------------------------
     path("orders/carts/payments/", PaymentDetailsViewView.as_view()),

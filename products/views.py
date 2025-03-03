@@ -19,23 +19,19 @@ class ProductCreateView(APIView):
         price = request.data.get("price", None)
         stock = request.data.get("stock", None)
         category = request.data.get("category_id", None)
-        print(request.data)
         # check if all fields are fulfilled
         if not all([sku, name, description, price, stock, category]):
             return Response({"message": "All fields are required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             if Product.objects.filter(sku=sku).exists():
-                print("filtro de sku error")
                 return Response({"message": f"Product with SKU {sku} already exists"},
                                 status=status.HTTP_400_BAD_REQUEST)
             if Product.objects.filter(name = name).exists():
-                print("product exist")
                 return Response({"message": f"Product with name {name} already exists"},
                                 status=status.HTTP_400_BAD_REQUEST)
 
             if not Category.objects.filter(pk=category).exists():
-                print("no exist category")
                 return Response({"message": "Category does not exist!"}, status=status.HTTP_400_BAD_REQUEST)
 
             # Serialize and save the given product
@@ -43,11 +39,9 @@ class ProductCreateView(APIView):
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status=status.HTTP_201_CREATED)
-            print(serializer.errors)
             return Response({"message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            print(str(e))
             return Response({"message": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -59,7 +53,6 @@ class ProductListView(APIView):
             serializer = ProductSerializer(products, many= True)
             return Response(serializer.data, status = status.HTTP_200_OK)
         except Exception as e:
-            print(e)
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -135,7 +128,6 @@ class ProductRemoveView(APIView):
 class CouponsCreateView(APIView):
     permission_classes = [AdminPermissions]
     def post(self, request):
-        print(request.data)
         coupon_code = request.data.get('coupon_code', None)
         discount = request.data.get('discount', None)
         discount_type = request.data.get('discount_type', None)
@@ -174,7 +166,7 @@ class CouponsAdminRetrieveView(APIView):
 class CouponUpdateView(APIView):
     permission_classes = [AdminPermissions]
     def put(self, request):
-        coupon_id = request.data.get("coupon_id", None)
+        coupon_id = request.data.get("id", None)
         print(request.data)
         if not coupon_id:
             return Response({'message': 'Coupon ID is required'}, status = status.HTTP_400_BAD_REQUEST)
@@ -189,6 +181,7 @@ class CouponUpdateView(APIView):
         except Coupon.DoesNotExist:
             return Response({'message': f'Coupon ID {coupon_id} not found!'})
         except Exception as e:
+            print(request.data)
             return Response({'message': str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
