@@ -118,9 +118,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:5173',
-]
+CORS_ALLOWED_ORIGINS = str(config("CORS_ALLOWED_ORIGINS")).split(" ")
 
 CORS_ALLOW_CREDENTIALS = True
 
