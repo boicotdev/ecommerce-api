@@ -29,7 +29,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'name', 'price', 'sku', 'description', 'stock', 'category_id',
-                  'recommended', 'best_seller', 'main_image', 'category', 'rank', 'score']
+                  'recommended', 'best_seller', 'main_image', 'first_image', 'second_image', 'category', 'rank', 'score']
 
 
 class ProductReviewSerializer(ModelSerializer):

@@ -55,9 +55,9 @@ urlpatterns = [
     #------------------------ carts endpoints -----------------------------
     path("carts/create/", CartCreateView.as_view()), #create carts
     path("carts/items/create/", CartItemCreateView.as_view()), #cart item create view
-    path("orders/carts/",  CartUserListView.as_view()), #list all carts of some user
-    path("orders/carts/delete/", CartUserDelete.as_view()), #remove a unique cart
-    path("orders/carts/check/", CartExistView.as_view()), #remove a unique cart
+    path("carts/",  CartUserListView.as_view()), #list all carts of some user
+    path("carts/delete/", CartUserDelete.as_view()), #remove a unique cart
+    path("carts/check/", CartExistView.as_view()), #remove a unique cart
 
     #------------------------ orders endpoints --------------------------
     path("carts/orders/create/", OrderCreateView.as_view()), #create a new user order

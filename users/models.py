@@ -23,8 +23,8 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     username = models.CharField(max_length=50, blank=True)
     avatar = models.ImageField(
-        default='media/static/images/users/avatar.jpg',
-        upload_to='media/static/images/users/', blank=True, null=True)
+        default='static/images/users/avatar.jpg',
+        upload_to='static/images/users/', blank=True, null=True)
     address = models.CharField(max_length=50)
     phone = models.CharField(max_length=15, blank=True)
     rol = models.CharField(max_length=15)

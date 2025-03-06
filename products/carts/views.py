@@ -128,7 +128,8 @@ class CartUserListView(APIView):
 class CartUserDelete(APIView):
     def delete(self, request):
         user_id = request.data.get("user", None)
-        cart_name = request.data.get("name", None)
+        cart_name = request.data.get("cart_name", None)
+        print(request.data)
         if not user_id or not cart_name:
             return Response({"message": "User ID is required"}, status = status.HTTP_400_BAD_REQUEST)
         try:
