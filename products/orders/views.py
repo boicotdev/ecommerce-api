@@ -1,7 +1,7 @@
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView, Response
 from rest_framework import status
-from products.models import Order, OrderProduct
+from products.models import Order, OrderProduct, Payment
 from users.models import User
 from products.serializers import OrderSerializer
 
@@ -47,36 +47,40 @@ class OrderUserList(APIView):
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-#update
+
 class OrderUserCancelView(APIView):
     def put(self, request):
-        order_id = request.data.get("order", None)
-        user_id = request.data.get("user", None)
-        order_status = request.data.get("status", None)
+        order_id = request.data.get("order")
+        user_id = request.data.get("user")
+        new_status = request.data.get("status")
 
-        if not order_id or not user_id or not order_status:
-            return Response({"message":"All fields are required"}, status = status.HTTP_400_BAD_REQUEST)
+        if not order_id or not user_id or not new_status:
+            return Response({"message": "All fields are required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        try:
-            user = User.objects.get(pk = user_id)
-            order = Order.objects.filter(pk = order_id, user = user).first()
+        # Buscar la orden que pertenezca al usuario
+        order = Order.objects.filter(pk=order_id, user_id=user_id).first()
 
-            if order is not None:
-                serializer = OrderSerializer(order, data=request.data, partial=True)
-                if serializer.is_valid():
-                    serializer.save()
-                    return Response(serializer.data, status = status.HTTP_200_OK)
-                return Response({"message": serializer.errors}, status = status.HTTP_400_BAD_REQUEST)
-            raise Order.DoesNotExist
+        if not order:
+            return Response({"message": "Order not found or does not belong to user"}, status=status.HTTP_400_BAD_REQUEST)
 
-        except User.DoesNotExist:
-            return Response({"message":"User not found"}, status = status.HTTP_400_BAD_REQUEST)
+        # Verificar si la orden tiene un pago asociado
+        has_payment = Payment.objects.filter(order=order).exists()
 
-        except Order.DoesNotExist:
-            return Response({"message":"Order not found"}, status = status.HTTP_400_BAD_REQUEST)
+        # Definir los estados en los que se puede cancelar la orden
+        cancelable_status = {"PENDING", "ON_HOLD"}
+        if has_payment:
+            cancelable_status.update({"PENDING", "FAILED"})
 
-        except Exception as e:
-            return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+        if order.status not in cancelable_status:
+            return Response({"message": f"No se puede cancelar en este estado {order.status}"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Actualizar el estado de la orden a CANCELLED
+        serializer = OrderSerializer(order, data={"status": "CANCELLED"}, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response({"message": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 #delete
 class OrderUserRemove(APIView):
@@ -86,8 +90,6 @@ class OrderUserRemove(APIView):
 
         if not order_id or not user_id:
             return Response({"message": "All fields are required"}, status = status.HTTP_200_OK)
-        
-
         try:
             user = User.objects.get(pk = user_id)
             order = Order.objects.filter(user = user, pk = order_id)

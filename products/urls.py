@@ -1,6 +1,6 @@
 from django.urls import path
 
-from shipments.views import ShipmentCreateView, ShipmentListView, ShipmentUpdateView
+from products.shipments.views import ShipmentCreateView, ShipmentListView, ShipmentUpdateView
 from .payments.views import CreatePaymentPreference, MercadoPagoPaymentView, PaymentDetailsViewView, \
     PaymentCreateView
 from .views import (

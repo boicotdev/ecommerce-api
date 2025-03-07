@@ -167,4 +167,7 @@ class Coupon(models.Model):
         return self.is_active and self.expiration_date > current_date
 
     def __str__(self):
-        return f"Coupon {self.coupon_code} | {self.discount_type} | {self.discount}% | Expires: {self.expiration_date}"
+        if self.discount_type == "FIXED":
+            return f"Coupon {self.coupon_code} | {self.discount_type} | ${self.discount} | Expires: {self.expiration_date}"
+        else:
+            return f"Coupon {self.coupon_code} | {self.discount_type} | {self.discount}% | Expires: {self.expiration_date}"

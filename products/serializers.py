@@ -29,7 +29,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'name', 'price', 'sku', 'description', 'stock', 'category_id',
-                  'recommended', 'best_seller', 'main_image', 'first_image', 'second_image', 'category', 'rank', 'score']
+                  'recommended', 'best_seller', 'main_image', 'first_image', 'second_image', 'category', 'rank']
 
 
 class ProductReviewSerializer(ModelSerializer):
@@ -41,7 +41,7 @@ class ProductReviewSerializer(ModelSerializer):
 class UserDetailsSerializer(ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'first_name', 'last_name', 'address']
+        fields = ['id', 'email', 'username', 'first_name', 'last_name', 'address', 'phone', 'avatar']
 
 
 class ProductCartSerializer(serializers.ModelSerializer):
@@ -80,33 +80,36 @@ class PaymentSerializer(ModelSerializer):
         depth = 1
 
 
+
+class OrderProductSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)  # Serializa el producto relacionado
+
+    class Meta:
+        model = OrderProduct
+        fields = ['id', 'product', 'price', 'quantity']  # No hay un campo 'products' en OrderProduct
+
+
+
 class OrderSerializer(serializers.ModelSerializer):
     total = serializers.SerializerMethodField()
+    products = OrderProductSerializer(source='orderproduct_set', many=True, read_only=True)  # Cambia aquí
 
     @staticmethod
     def get_total(order):
         try:
-            order_products = OrderProduct.objects.filter(order=order)
-            total = sum(p.price * p.quantity for p in order_products)
-            return total + 5000
+            payment = Payment.objects.filter(order=order).first()
+            return payment.payment_amount if payment else 0
         except Exception as e:
-            return 0  # Devuelve 0 en caso de error para evitar que falle la serialización
+            print(f"Error en get_total: {e}")
+            return 0
 
-    user = UserDetailsSerializer()
+    user = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), required=True)
+    user_details = UserDetailsSerializer(source='user', read_only=True)
     payment = PaymentSerializer()
+
     class Meta:
         model = Order
-        fields = ['id', 'user', 'payment', 'creation_date', 'status', 'total']
-
-
-class OrderProductSerializer(ModelSerializer):
-    """
-    A product at a `Order`
-    """
-
-    class Meta:
-        model = OrderProduct
-        fields = '__all__'
+        fields = ['id', 'user', 'user_details', 'payment', 'creation_date', 'status', 'total', 'products']
 
 
 class CartSerializer(ModelSerializer):
@@ -116,35 +119,43 @@ class CartSerializer(ModelSerializer):
 
 
 class ShipmentSerializer(ModelSerializer):
-    customer = UserDetailsSerializer()
+    customer = serializers.PrimaryKeyRelatedField(queryset=User.objects.all(), write_only=True)
+    customer_details = UserDetailsSerializer(source='customer', read_only=True)
     amount = serializers.SerializerMethodField()
 
-    def get_amount(self, obj):
+    @staticmethod
+    def get_amount(shipment):
         try:
-            total = 0
-            order = obj.order
-            products = OrderProduct.objects.filter(order=order)
-            total += sum(item.price * item.quantity for item in products)
-            return total
+            order = shipment.order  # Acceder directamente a la orden
+            payment = Payment.objects.filter(order=order).first()  # Buscar el pago asociado
+
+            if payment:
+                return payment.payment_amount  # Devolver el monto pagado
+
+            return 0  # Si no hay pago, devolver 0
         except Exception as e:
+            print(f"Error en get_amount: {e}")  # Log del error
             return 0
+
     class Meta:
         model = Shipment
-        fields = ['id', 'order', 'shipment_address', 'shipment_date', 'shipment_city',
-                                                            'shipment_date_post_code', 'status', 'customer', 'amount']
+        fields = [
+            'id', 'order', 'shipment_address', 'shipment_date',
+            'shipment_city', 'shipment_date_post_code', 'status',
+            'customer', 'customer_details', 'amount'
+        ]
 
-    def validate_customer_id(self, value):
+    def validate_customer(self, value):
+        """Validar que el campo 'customer' sea obligatorio"""
         if not value:
-            raise serializers.ValidationError("El campo customer_id es obligatorio.")
+            raise serializers.ValidationError("El campo customer es obligatorio.")
         return value
 
-    def validate_order_id(self, value):
-        if Shipment.objects.filter(order_id=value).exists():
-            raise serializers.ValidationError(
-                "Ya existe un envío asociado a esta orden."
-            )
+    def validate_order(self, value):
+        """Evitar que una orden tenga más de un envío"""
+        if Shipment.objects.filter(order=value).exists():
+            raise serializers.ValidationError("Ya existe un envío asociado a esta orden.")
         return value
-
 
 
 class CouponSerializer(ModelSerializer):

@@ -38,6 +38,7 @@ class CategoryListView(APIView):
 class CategoryUpdateView(APIView):
     def put(self, request):
         category_id = request.data.get("id", None)
+        print(request.data)
         if not category_id:
             return Response({"message": "Category id is required"}, status = status.HTTP_400_BAD_REQUEST)
         try:
@@ -49,6 +50,7 @@ class CategoryUpdateView(APIView):
                     return Response(serializer.data, status = status.HTTP_200_OK)
                 return Response(serializer.errors, status = status.HTTP_404_NOT_FOUND)
         except Exception as e:
+            print(request.data)
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

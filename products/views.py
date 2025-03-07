@@ -84,7 +84,6 @@ class ProductUpdateView(APIView):
 
     def put(self, request):
         product_sku = request.data.get("sku")
-
         if not product_sku:
             return Response({"message" : f"Product with ID {product_sku} doesn't exists"}, status = status.HTTP_400_BAD_REQUEST)
 
@@ -167,7 +166,6 @@ class CouponUpdateView(APIView):
     permission_classes = [AdminPermissions]
     def put(self, request):
         coupon_id = request.data.get("id", None)
-        print(request.data)
         if not coupon_id:
             return Response({'message': 'Coupon ID is required'}, status = status.HTTP_400_BAD_REQUEST)
         try:
@@ -181,7 +179,6 @@ class CouponUpdateView(APIView):
         except Coupon.DoesNotExist:
             return Response({'message': f'Coupon ID {coupon_id} not found!'})
         except Exception as e:
-            print(request.data)
             return Response({'message': str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

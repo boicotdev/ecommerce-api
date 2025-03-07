@@ -25,7 +25,7 @@ class ShipmentCreateView(APIView):
         if not customer_id or not order_id:
             return Response({"message": "Customer ID and Order ID are required!"}, status = status.HTTP_400_BAD_REQUEST)
 
-        if Shipment.objects.filter(order_id=request.data.get("order")).exists():
+        if Shipment.objects.filter(order__id=order_id).exists():
             return Response(
                 {"error": "Ya existe un envío asociado a esta orden."},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -36,7 +36,7 @@ class ShipmentCreateView(APIView):
             if serializer.is_valid():
                 serializer.save()
                 return Response(serializer.data, status = status.HTTP_201_CREATED)
-
+            print(serializer.errors)
             return Response(serializer.errors, status = status.HTTP_400_BAD_REQUEST)
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
