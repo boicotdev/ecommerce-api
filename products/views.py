@@ -1,6 +1,7 @@
 from rest_framework.views import APIView, Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+from rest_framework.pagination import LimitOffsetPagination
 from .models import Category, Product, Coupon
 from .permissions import AdminPermissions
 from .serializers import (
@@ -50,9 +51,11 @@ class ProductCreateView(APIView):
 class ProductListView(APIView):
     def get(self, request):
         try:
-            products = Product.objects.all()
-            serializer = ProductSerializer(products, many= True)
-            return Response(serializer.data, status = status.HTTP_200_OK)
+            queryset = Product.objects.all()
+            paginator = LimitOffsetPagination()
+            paginated_queryset = paginator.paginate_queryset(queryset, request)
+            serializer = ProductSerializer(paginated_queryset, many= True)
+            return paginator.get_paginated_response(serializer.data)
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
