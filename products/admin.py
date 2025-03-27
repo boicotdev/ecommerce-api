@@ -8,7 +8,10 @@ from .models import (
     Cart,
     ProductReview,
     Shipment,
-    Payment, Coupon, UnitOfMeasure
+    Payment, Coupon, UnitOfMeasure, Purchase, PurchaseItem
 )
 
-admin.site.register([Product, ProductCart, OrderProduct, Order, Category, Cart, ProductReview, Shipment, Payment, Coupon, UnitOfMeasure])
+admin.site.register([Product, ProductCart, OrderProduct, Order, Category, Cart,
+                     ProductReview, Shipment, Payment, Coupon, UnitOfMeasure,
+                     Purchase, PurchaseItem
+                     ])

@@ -1,6 +1,7 @@
 from django.urls import path
 
 from products.shipments.views import ShipmentCreateView, ShipmentListView, ShipmentUpdateView
+from purchases.views import PurchaseCreateUpdateView, PurchaseDeleteView, PurchaseListView, PurchaseDetailView
 from .payments.views import CreatePaymentPreference, MercadoPagoPaymentView, PaymentDetailsViewView, \
     PaymentCreateView, GenerateSalesReportView
 from .views import (
@@ -101,4 +102,11 @@ urlpatterns = [
     path("payment/preferences/", CreatePaymentPreference.as_view()),
     path("process_payment/", MercadoPagoPaymentView.as_view()),
     path("sales-report/<str:order_id>/", GenerateSalesReportView.as_view(), name="sales-report"),
+
+
+    #------------------------------------ Purchases -----------------------------
+    path("purchases/", PurchaseCreateUpdateView.as_view()), # handle purchase creation
+    path("purchases/delete/", PurchaseDeleteView.as_view()), # handle purchase deletion
+    path("purchases/list/", PurchaseListView.as_view(), name="purchase-list"),  # Retrieve all purchases
+    path("purchases/details/<str:id>/", PurchaseDetailView.as_view(), name="purchase-detail"),
 ]

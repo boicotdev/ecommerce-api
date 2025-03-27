@@ -3,6 +3,7 @@ from rest_framework import status, generics
 from rest_framework_simplejwt.views import  TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.pagination import LimitOffsetPagination
 
 from .permissions import IsOwnerOrSuperUserPermission
 from .serializers import UserSerializer, CustomTokenObtainPairSerializer, CommentSerializer, ChangePasswordSerializer
@@ -109,25 +110,15 @@ class UserUpdateView(APIView):
         except Exception as e:
             return Response({"message": "Internal server error!"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-#retrieve all users
-class UserListView(APIView):
-    """
-    List all users into the database
-    """
-    permission_classes = [IsAuthenticated, IsAdminUser]
-    def get(self, request):
-        users = User.objects.all()
-        data = UserSerializer(users, many=True)
-        return Response(data.data, status = status.HTTP_200_OK)
-
-
 class ClientUserListView(APIView):
     permission_classes = [IsAuthenticated, IsAdminUser]
     def get(self, request):
         try:
-            users = User.objects.filter(rol="Cliente")
-            clients = UserSerializer(users, many = True)
-            return Response(clients.data, status = status.HTTP_200_OK)
+            queryset = User.objects.filter(rol="Cliente")
+            paginator = LimitOffsetPagination()
+            paginated_queryset = paginator.paginate_queryset(queryset, request)
+            serializer = UserSerializer(paginated_queryset, many=True)
+            return paginator.get_paginated_response(serializer.data)
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 

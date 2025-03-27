@@ -7,19 +7,43 @@ from django.core.validators import RegexValidator
 from django.db import models
 
 
+def generate_unique_id(user_dni, purchase=False):
+    """
+    Genera un ID único con los siguientes formatos:
+    - Orden: "ECCXX9YYYYYYYY" (XX = letras, 9 = número, YYYYYYYY = DNI)
+    - Compra: "COMP-ECCXX9YY" (XX = letras, 9 = número, YY = últimos 2 dígitos del DNI)
+    """
 
-def generate_unique_id(user_dni):
-    """
-    Genera un ID único con formato: ECCXX9YYYYYYYY (XX = letras, 9 = número, YYYYYYYY = DNI)
-    """
     while True:
-        prefix = f"{random.choice(string.ascii_uppercase)}{random.choice(string.ascii_uppercase)}{random.randint(0, 9)}"
-        unique_id = f"ECC{prefix}{user_dni}"
+        if purchase:
+            # Prefijo para compras: COMP-ECCXX9YY (últimos 2 dígitos del DNI)
+            prefix = f"{random.choice(string.ascii_uppercase)}{random.choice(string.ascii_uppercase)}{random.randint(0, 9)}"
+            unique_id = f"COMP-ECC{prefix}{str(user_dni)[-4:]}"  # Últimos 2 dígitos del DNI
 
-        # Verificar si el ID ya existe en la base de datos
-        if not Order.objects.filter(id=unique_id).exists():
-            return unique_id
+            if not Purchase.objects.filter(id=unique_id).exists():
+                return unique_id
 
+        else:
+            # Prefijo para órdenes: ECCXX9YYYYYYYY
+            prefix = f"{random.choice(string.ascii_uppercase)}{random.choice(string.ascii_uppercase)}{random.randint(0, 9)}"
+            unique_id = f"ECC{prefix}{user_dni}"
+
+            if not Order.objects.filter(id=unique_id).exists():
+                return unique_id
+
+
+options = (
+    ("CANASTILLA", "CANASTILLA"),
+    ("MANOJO", "MANOJO"),
+    ("BULTO", "BULTO"),
+    ("CAJA", "CAJA"),
+    ("ATADOS", "ATADOS"),
+    ("DOCENA", "DOCENA"),
+    ("BOLSAS", "BOLSAS"),
+    ("GUACAL", "GUACAL"),
+    ("PONY", "PONY"),
+    ("KG", "KG"),
+)
 
 class Category(models.Model):
     name = models.CharField(max_length=30)
@@ -34,22 +58,11 @@ class UnitOfMeasure(models.Model):
     Represent a measure unity, a product can be related to `UnitOfMeasure`
     Set all choices are required by your application.
     """
-    options = (
-        ("CANASTILLA", "CANASTILLA"),
-        ("MANOJO", "MANOJO"),
-        ("BULTO", "BULTO"),
-        ("CAJA", "CAJA"),
-        ("ATADOS", "ATADOS"),
-        ("DOCENA", "DOCENA"),
-        ("BOLSAS", "BOLSAS"),
-        ("GUACAL", "GUACAL"),
-        ("PONY", "PONY"),
-        ("KG", "KG"),
-    )
     unity = models.CharField(max_length=30, choices=options)
+    weight = models.IntegerField()
 
     def __str__(self):
-        return f"{self.unity} - {self.id}"
+        return f"Unit Of Measure {self.unity} | ID {self.id} | Weight {self.weight} Lbs"
 
 class Product(models.Model):
     sku = models.CharField(max_length=30, primary_key=True)
@@ -115,8 +128,8 @@ class Order(models.Model):
 
     id = models.CharField(primary_key=True, max_length=20)
     user = models.ForeignKey('users.User', on_delete=models.CASCADE)
-    creation_date = models.DateTimeField(auto_now_add=True)  # Se fija al crearse
-    last_updated = models.DateTimeField(auto_now=True)  # Se actualiza automáticamente en cada cambio
+    creation_date = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
     status = models.CharField(max_length=20, choices=STATUS, default="PENDING")
 
 
@@ -155,7 +168,7 @@ class ProductReview(models.Model):
 
 class Shipment(models.Model):
     @abstractmethod
-    def set_tracking_number():
+    def set_tracking_number(self):
         return f'ECC-{str(uuid.uuid4())[:15].replace("-", "")}'
 
     id = models.CharField(max_length=100, default=set_tracking_number, primary_key=True)
@@ -235,3 +248,71 @@ class Coupon(models.Model):
             return f"Coupon {self.coupon_code} | {self.discount_type} | ${self.discount} | Expires: {self.expiration_date}"
         else:
             return f"Coupon {self.coupon_code} | {self.discount_type} | {self.discount}% | Expires: {self.expiration_date}"
+
+
+class Purchase(models.Model):
+    id = models.CharField(max_length=50, primary_key=True)
+    purchased_by = models.ForeignKey("users.User", on_delete=models.SET_NULL, null=True, blank=True,
+                                     related_name="user_admin")
+    purchase_date = models.DateTimeField(auto_now_add=True)
+    last_updated = models.DateTimeField(auto_now=True)
+    total_amount = models.FloatField(default=0)  # Total de compra
+    global_sell_percentage = models.FloatField(default=10)  # Porcentaje de venta global
+    estimated_profit = models.FloatField(default=0)  # Ganancia estimada
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            admin_dni = getattr(self.purchased_by, 'dni', "00000000")
+            self.id = generate_unique_id(admin_dni, purchase="True")
+        super().save(*args, **kwargs)
+
+    def update_totals(self):
+        """Recalcula el total de la compra y la ganancia estimada."""
+        total_cost = sum(item.subtotal() for item in self.purchase_items.all())
+        self.total_amount = total_cost
+        self.estimated_profit = sum(item.estimated_profit() for item in self.purchase_items.all())
+        self.save()
+
+    def __str__(self):
+        return f"Purchase {self.id} | Total: ${self.total_amount} | Profit: ${self.estimated_profit}"
+
+
+
+class PurchaseItem(models.Model):
+    purchase = models.ForeignKey(Purchase, on_delete=models.CASCADE, related_name="purchase_items")
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    quantity = models.IntegerField()
+    purchase_price = models.FloatField()  # Precio de compra unitario
+    sell_percentage = models.FloatField(null=True, blank=True)  # Puede ser individual o usar el global
+    unit_measure = models.ForeignKey(UnitOfMeasure, on_delete=models.CASCADE)
+
+    def get_sell_percentage(self):
+        """Obtiene el porcentaje de venta: usa el del item si está definido, de lo contrario usa el de Purchase."""
+        return self.sell_percentage if self.sell_percentage is not None else self.purchase.global_sell_percentage
+
+    def subtotal(self):
+        """Calcula el costo total de compra de este producto."""
+        return self.quantity * self.purchase_price
+
+    def estimated_profit(self):
+        """Calcula la ganancia estimada en base al porcentaje de venta y el peso de la unidad de medida."""
+        sell_percentage = self.get_sell_percentage()
+        profit_per_unit = self.purchase_price * (sell_percentage / 100)
+        return self.quantity * profit_per_unit
+
+    def sale_price_per_weight(self):
+        """Calcula el precio de venta basado en el subtotal, el peso de la unidad de medida y la cantidad comprada."""
+        if not self.unit_measure or self.unit_measure.weight == 0:
+            return 0  # Evita división por cero o errores con None
+
+        sell_percentage = self.get_sell_percentage()
+
+        # Aplicar el porcentaje de venta al subtotal
+        subtotal_with_margin = self.subtotal() + (self.subtotal() * (sell_percentage / 100))
+
+        # Calcular precio de venta basado en el peso de la unidad de medida y cantidad comprada
+        return subtotal_with_margin / (self.unit_measure.weight * self.quantity)
+
+    def __str__(self):
+        return f"{self.quantity}x {self.product.name} @ ${self.purchase_price} (Sell %: {self.get_sell_percentage()}%)"
+

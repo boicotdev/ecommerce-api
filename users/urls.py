@@ -2,7 +2,6 @@ from django.urls import path
 
 from .views import (
     UserCreateView,
-    UserListView,
     UserUpdateView,
     UserDeleteView,
     UserDetailsView,
@@ -22,7 +21,6 @@ urlpatterns = [
     path("users/token/refresh/", CustomTokenRefreshPairView.as_view()), #token refresh
     path("users/logout/", LogoutUserView.as_view()), #kill a user session
     path("users/create/", UserCreateView.as_view()), #create a new user
-    path("users/", UserListView.as_view()), #list all users into the database
     path("dashboard/clients/", ClientUserListView.as_view()), #retrieve all user clients
     path("users/user/", UserDetailsView.as_view()), #retrieve all info of a single user
     path("users/user/update/", UserUpdateView.as_view()), #edit a single user

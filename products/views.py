@@ -1,3 +1,4 @@
+from rest_framework.permissions import IsAdminUser
 from rest_framework.views import APIView, Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
@@ -12,9 +13,8 @@ from .serializers import (
 #create a new product
 class ProductCreateView(APIView):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
-    #permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAdminUser]
     def post(self, request):
-        print(request.data)
         sku = request.data.get("sku", None)
         name = request.data.get("name", None)
         description = request.data.get("description", None)
@@ -60,7 +60,7 @@ class ProductListView(APIView):
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-#retrieve a single product 
+#retrieve all details of a single product
 class ProductDetailsView(APIView):
     def get(self, request):
         sku = request.query_params.get("sku", None)
@@ -155,7 +155,7 @@ class CouponsAdminRetrieveView(APIView):
     Only admin user can access
     - Retrieve all coupons available
     """
-    #permission_classes = [AdminPermissions]
+    permission_classes = [AdminPermissions]
 
     def get(self, request):
         try:

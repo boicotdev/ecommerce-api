@@ -8,7 +8,7 @@ from .models import (
     OrderProduct,
     Category,
     Cart,
-    ProductReview, Shipment, Payment, Coupon, UnitOfMeasure
+    ProductReview, Shipment, Payment, Coupon, UnitOfMeasure, PurchaseItem, Purchase
 )
 from rest_framework import serializers
 
@@ -45,7 +45,6 @@ class ProductSerializer(serializers.ModelSerializer):
             instance.sku = sku
             instance.save()
             return instance
-
 
 
 class ProductReviewSerializer(ModelSerializer):
@@ -96,7 +95,6 @@ class PaymentSerializer(ModelSerializer):
         depth = 1
 
 
-
 class OrderProductSerializer(serializers.ModelSerializer):
     product = ProductSerializer(read_only=True)  # Serializa el producto relacionado
 
@@ -105,10 +103,9 @@ class OrderProductSerializer(serializers.ModelSerializer):
         fields = ['id', 'product', 'price', 'quantity']  # No hay un campo 'products' en OrderProduct
 
 
-
 class OrderSerializer(serializers.ModelSerializer):
     total = serializers.SerializerMethodField()
-    products = OrderProductSerializer(source='orderproduct_set', many=True, read_only=True)  # Cambia aquí
+    products = OrderProductSerializer(source='orderproduct_set', many=True, read_only=True)
 
     @staticmethod
     def get_total(order):
@@ -178,3 +175,32 @@ class CouponSerializer(ModelSerializer):
     class Meta:
         model = Coupon
         fields = '__all__'
+
+class UnitOfMeasureSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UnitOfMeasure
+        fields = '__all__'
+
+
+class PurchaseItemSerializer(serializers.ModelSerializer):
+    subtotal = serializers.ReadOnlyField()
+    estimated_profit = serializers.ReadOnlyField()
+    sale_price_per_weight = serializers.ReadOnlyField()
+
+    class Meta:
+        model = PurchaseItem
+        fields = ["id", "product", "quantity", "purchase_price", "sell_percentage", "unit_measure", "subtotal", "estimated_profit", "sale_price_per_weight"]
+
+class PurchaseSerializer(serializers.ModelSerializer):
+    purchase_items = PurchaseItemSerializer(many=True, read_only=True)
+    estimated_profit = serializers.ReadOnlyField()
+
+    class Meta:
+        model = Purchase
+        fields = ["id", "purchased_by", "purchase_date", "last_updated", "total_amount", "global_sell_percentage", "estimated_profit", "purchase_items"]
+
+    def validate_global_sell_percentage(self, value):
+        """Valida que el porcentaje de venta global sea al menos 10%"""
+        if value is None or value < 10:
+            raise serializers.ValidationError("El porcentaje de venta debe ser al menos 10%")
+        return value
