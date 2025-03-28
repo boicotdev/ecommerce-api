@@ -1,13 +1,76 @@
+from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAdminUser
 from rest_framework.views import APIView, Response
 from rest_framework import status
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.pagination import LimitOffsetPagination
-from .models import Category, Product, Coupon
+from .models import Category, Product, Coupon, UnitOfMeasure
 from .permissions import AdminPermissions
 from .serializers import (
-    ProductSerializer, CouponSerializer,
+    ProductSerializer, CouponSerializer, UnitOfMeasureSerializer,
 )
+
+
+class UnitOfMeasureView(APIView):
+    """
+    API view to perform CRUD operations on UnitOfMeasure.
+    Only accessible to admin users.
+    """
+    permission_classes = [IsAdminUser]
+
+    def get(self, request, unit_id=None):
+        """
+        Retrieve all units of measure or a specific one by ID.
+        - If `unit_id` is provided, fetch a single unit.
+        - Otherwise, return a list of all units.
+        """
+        try:
+            if unit_id:
+                # Fetch a single unit or return a 404 error if not found
+                unit = get_object_or_404(UnitOfMeasure, id=unit_id)
+                serializer = UnitOfMeasureSerializer(unit)
+            else:
+                # Fetch all units
+                units = UnitOfMeasure.objects.all()
+                serializer = UnitOfMeasureSerializer(units, many=True)
+
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    def post(self, request):
+        """
+        Create a new unit of measure.
+        """
+        serializer = UnitOfMeasureSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def put(self, request, unit_id):
+        """
+        Update an existing unit of measure.
+        - Uses `partial=True` to allow partial updates.
+        - Returns 404 if the unit is not found.
+        """
+        unit = get_object_or_404(UnitOfMeasure, id=unit_id)
+        serializer = UnitOfMeasureSerializer(unit, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, unit_id):
+        """
+        Delete an existing unit of measure.
+        - Returns 204 status if successful.
+        - Returns 404 if the unit is not found.
+        """
+        unit = get_object_or_404(UnitOfMeasure, id=unit_id)
+        unit.delete()
+        return Response({"message": "Unit of measure successfully deleted"}, status=status.HTTP_204_NO_CONTENT)
 
 
 #create a new product

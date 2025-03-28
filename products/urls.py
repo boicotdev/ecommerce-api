@@ -12,7 +12,10 @@ from .views import (
     ProductRemoveView,
     CouponsCreateView,
     CouponUpdateView,
-    CouponDeleteView, CouponsAdminRetrieveView, CouponCodeCheckView,
+    CouponDeleteView,
+    CouponsAdminRetrieveView,
+    CouponCodeCheckView,
+    UnitOfMeasureView,
 
 )
 from products.categories.views import (
@@ -109,4 +112,6 @@ urlpatterns = [
     path("purchases/delete/", PurchaseDeleteView.as_view()), # handle purchase deletion
     path("purchases/list/", PurchaseListView.as_view(), name="purchase-list"),  # Retrieve all purchases
     path("purchases/details/<str:id>/", PurchaseDetailView.as_view(), name="purchase-detail"),
+
+    path("units-of-measure/", UnitOfMeasureView.as_view())
 ]
