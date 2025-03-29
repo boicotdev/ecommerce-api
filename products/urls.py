@@ -113,5 +113,7 @@ urlpatterns = [
     path("purchases/list/", PurchaseListView.as_view(), name="purchase-list"),  # Retrieve all purchases
     path("purchases/details/<str:id>/", PurchaseDetailView.as_view(), name="purchase-detail"),
 
-    path("units-of-measure/", UnitOfMeasureView.as_view())
+    path("units-of-measure/", UnitOfMeasureView.as_view()), #Only GET Method to retrieve all measure units
+    path("units-of-measure/create/", UnitOfMeasureView.as_view()), #Only POST Method
+    path("units-of-measure/<int:unit_id>/", UnitOfMeasureView.as_view()), #GET PUT DELETE Methods
 ]

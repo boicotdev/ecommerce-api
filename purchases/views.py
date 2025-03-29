@@ -19,7 +19,7 @@ class PurchaseCreateUpdateView(APIView):
         """Crea una nueva compra."""
         required_fields = {"purchased_by", "global_sell_percentage", "items"}
         missing_fields = required_fields - request.data.keys()
-
+        print(request.data)
         if missing_fields:
             return Response({"error": f"Missing fields: {', '.join(missing_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -46,7 +46,7 @@ class PurchaseCreateUpdateView(APIView):
                     quantity = item.get("quantity")
                     purchase_price = item.get("purchase_price")
                     sell_percentage = item.get("sell_percentage")
-                    unit_measure = item.get("unity")
+                    unit_measure = item.get("unit_measure")
 
                     if not all([product_sku, quantity, purchase_price, unit_measure]):
                         return Response(

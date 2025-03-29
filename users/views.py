@@ -42,7 +42,7 @@ class UserCreateView(APIView):
         first_name = request.data.get("first_name", None)
         last_name = request.data.get("last_name", None)
         email = request.data.get("email", None)
-        print(request.data)
+
         
         #validate if required fields are fulfilled
         if not username or not first_name or not last_name or not email:
@@ -77,7 +77,6 @@ class UserDetailsView(APIView):
         except User.DoesNotExist:
             return Response({"message": f"User with ID {user_id} wasn't found"}, status = status.HTTP_400_BAD_REQUEST)
         except Exception as e:
-            print(request.query_params)
             return  Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
@@ -147,6 +146,7 @@ class CommentCreateView(APIView):
         comment = request.data.get("raw_comment", None)
         user = request.data.get("user", None)
 
+
         #check if required fields are fulfilled
         if not comment or not user:
             return Response({"message": "All fields are required"}, status = status.HTTP_400_BAD_REQUEST)
@@ -163,7 +163,6 @@ class CommentCreateView(APIView):
             return Response({"message": "Bad Request"}, status = status.HTTP_400_BAD_REQUEST)
 
         except Exception as e:
-            print(e)
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 

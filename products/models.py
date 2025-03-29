@@ -41,6 +41,8 @@ options = (
     ("DOCENA", "DOCENA"),
     ("BOLSAS", "BOLSAS"),
     ("GUACAL", "GUACAL"),
+    ("BANDEJA", "BANDEJA"),
+    ("ESTUCHE", "ESTUCHE"),
     ("PONY", "PONY"),
     ("KG", "KG"),
 )
@@ -70,13 +72,17 @@ class Product(models.Model):
     description = models.TextField(max_length=1024)
     price = models.FloatField()
     stock = models.IntegerField(default=1)
-    measure_unity = models.ForeignKey(UnitOfMeasure, blank=True, null=True, on_delete=models.CASCADE, verbose_name="unity")
+    measure_unity = models.ForeignKey(UnitOfMeasure, blank=True, null=True, on_delete=models.SET_NULL, verbose_name="unity")
     category = models.ForeignKey(Category, null=True, on_delete=models.SET_NULL)
     rank = models.IntegerField(default=0)
     recommended = models.BooleanField(default=False)
     best_seller = models.BooleanField(default=False)
     score = models.IntegerField(blank=True, null=True)
     slug = models.SlugField(blank=True, null=True)
+    has_discount = models.BooleanField(default=False, null=True, blank=True)
+    purchase_price = models.FloatField(default=0, blank=True, null=True)
+    discount_price = models.FloatField(default=0, blank=True, null=True)
+    # ------------------------ images --------------------
     main_image = models.ImageField(
         upload_to="products/", default="products/dummie_image.jpeg"
     )
@@ -105,8 +111,7 @@ class ProductCart(models.Model):
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     quantity = models.IntegerField(default=1)
-    measure_unity = models.ForeignKey(UnitOfMeasure, blank=True, null=True, on_delete=models.CASCADE,
-                                      verbose_name="unity")
+    measure_unity = models.ForeignKey(UnitOfMeasure, blank=True, null=True, on_delete=models.SET_NULL, verbose_name="unity")
 
 
     def __str__(self):
@@ -149,7 +154,7 @@ class OrderProduct(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     price = models.FloatField()
     quantity = models.IntegerField()
-    measure_unity = models.ForeignKey(UnitOfMeasure, blank=True, null=True, on_delete=models.CASCADE,
+    measure_unity = models.ForeignKey(UnitOfMeasure, blank=True, null=True, on_delete=models.SET_NULL,
                                       verbose_name="unity")
 
     def __str__(self):
@@ -205,8 +210,8 @@ class Payment(models.Model):
         ("CASH", "CASH"),
         ("DEBIT_CARD", "DEBIT_CARD"),
         ("CREDIT_CARD", "CREDIT_CARD"),
-        #("BANK_TRANSFER", "BANK_TRANSFER"),
-        #("NEQUI", "NEQUI")
+        ("BANK_TRANSFER", "BANK_TRANSFER"),
+        ("NEQUI", "NEQUI")
     )
 
     PAYMENT_STATUS = (
@@ -255,6 +260,7 @@ class Purchase(models.Model):
     purchased_by = models.ForeignKey("users.User", on_delete=models.SET_NULL, null=True, blank=True,
                                      related_name="user_admin")
     purchase_date = models.DateTimeField(auto_now_add=True)
+    #purchase_date = models.DateTimeField(blank=True, null=True)
     last_updated = models.DateTimeField(auto_now=True)
     total_amount = models.FloatField(default=0)  # Total de compra
     global_sell_percentage = models.FloatField(default=10)  # Porcentaje de venta global
@@ -280,11 +286,11 @@ class Purchase(models.Model):
 
 class PurchaseItem(models.Model):
     purchase = models.ForeignKey(Purchase, on_delete=models.CASCADE, related_name="purchase_items")
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, blank=True, null=True, on_delete=models.SET_NULL)
     quantity = models.IntegerField()
     purchase_price = models.FloatField()  # Precio de compra unitario
-    sell_percentage = models.FloatField(null=True, blank=True)  # Puede ser individual o usar el global
-    unit_measure = models.ForeignKey(UnitOfMeasure, on_delete=models.CASCADE)
+    sell_percentage = models.FloatField(null=True, blank=True)
+    unit_measure = models.ForeignKey(UnitOfMeasure, blank=True, null=True, on_delete=models.SET_NULL)
 
     def get_sell_percentage(self):
         """Obtiene el porcentaje de venta: usa el del item si está definido, de lo contrario usa el de Purchase."""
