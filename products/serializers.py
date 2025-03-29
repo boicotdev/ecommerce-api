@@ -33,7 +33,7 @@ class ProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['name', 'price', 'sku', 'description', 'stock', 'category_id',
-                  'recommended', 'best_seller', 'main_image', 'first_image', 'second_image', 'category', 'rank', 'measure_unity', 'unity']
+                  'recommended', 'best_seller', 'has_discount', 'discount_price', 'main_image', 'first_image', 'second_image', 'category', 'rank', 'measure_unity', 'unity']
 
         def create(self, **validated_data):
             print('validated data',validated_data)
@@ -195,10 +195,10 @@ class PurchaseSerializer(serializers.ModelSerializer):
     purchase_items = PurchaseItemSerializer(many=True, read_only=True)
     estimated_profit = serializers.ReadOnlyField()
 
+
     class Meta:
         model = Purchase
         fields = ["id", "purchased_by", "purchase_date", "last_updated", "total_amount", "global_sell_percentage", "estimated_profit", "purchase_items"]
-
     def validate_global_sell_percentage(self, value):
         """Valida que el porcentaje de venta global sea al menos 10%"""
         if value is None or value < 10:
