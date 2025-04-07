@@ -1,4 +1,5 @@
 from django.db import transaction
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.views import APIView, Response
 from rest_framework import status
@@ -111,7 +112,7 @@ class AdminOrderCreateView(APIView):
         return Response({'message': 'Order created successfully'}, status=status.HTTP_201_CREATED)
 
 
-#read all orders of a single user
+#retrieve all orders of a single user
 class OrderUserList(APIView):
     permission_classes = [IsAuthenticated]
     def get(self, request):
@@ -192,13 +193,14 @@ class OrderUserRemove(APIView):
 
 #order list with superuser permissions
 class OrdersDashboardView(APIView):
-    permission_classes = [IsAuthenticated, IsAdminUser]
+    permission_classes = [IsAdminUser]
     def get(self, request):
         try:
-            orders = Order.objects.all()
-            serializer = OrderSerializer(orders, many = True)
-            return Response(serializer.data, status = status.HTTP_200_OK)
-
+            queryset = Order.objects.all()
+            paginator = LimitOffsetPagination()
+            paginated_queryset = paginator.paginate_queryset(queryset, request)
+            serializer = OrderSerializer(paginated_queryset, many = True)
+            return paginator.get_paginated_response(serializer.data)
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
 

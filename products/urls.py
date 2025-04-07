@@ -1,7 +1,8 @@
 from django.urls import path
 
 from products.shipments.views import ShipmentCreateView, ShipmentListView, ShipmentUpdateView
-from purchases.views import PurchaseCreateUpdateView, PurchaseDeleteView, PurchaseListView, PurchaseDetailView
+from products.purchases.views import PurchaseCreateUpdateView, PurchaseDeleteView, PurchaseListView, PurchaseDetailView, \
+    RetrieveMissingItemsView
 from .payments.views import CreatePaymentPreference, MercadoPagoPaymentView, PaymentDetailsViewView, \
     PaymentCreateView, GenerateSalesReportView
 from .views import (
@@ -15,7 +16,7 @@ from .views import (
     CouponDeleteView,
     CouponsAdminRetrieveView,
     CouponCodeCheckView,
-    UnitOfMeasureView,
+    UnitOfMeasureView, RetrieveLatestProducts,
 
 )
 from products.categories.views import (
@@ -56,6 +57,7 @@ urlpatterns = [
     path("products/categories/update/", CategoryUpdateView.as_view()), #update a category
     path("products/categories/remove/", CategoryRemoveView.as_view()), #remove a category
     path("products/list/", ProductListView.as_view()), #retrieve all products
+    path("products/latest/", RetrieveLatestProducts.as_view()),
     path("products/product/details/", ProductDetailsView.as_view()), #retrieve a single products
     path("products/product/update/", ProductUpdateView.as_view()),
     path("products/product/remove/", ProductRemoveView.as_view()), # remove a single product
@@ -112,6 +114,7 @@ urlpatterns = [
     path("purchases/delete/", PurchaseDeleteView.as_view()), # handle purchase deletion
     path("purchases/list/", PurchaseListView.as_view(), name="purchase-list"),  # Retrieve all purchases
     path("purchases/details/<str:id>/", PurchaseDetailView.as_view(), name="purchase-detail"),
+    path("purchases/missing-items/", RetrieveMissingItemsView.as_view()),
 
     path("units-of-measure/", UnitOfMeasureView.as_view()), #Only GET Method to retrieve all measure units
     path("units-of-measure/create/", UnitOfMeasureView.as_view()), #Only POST Method

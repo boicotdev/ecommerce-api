@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from rest_framework.generics import ListAPIView
 from rest_framework.permissions import IsAdminUser
 from rest_framework.views import APIView, Response
 from rest_framework import status
@@ -78,6 +79,7 @@ class ProductCreateView(APIView):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
     permission_classes = [IsAdminUser]
     def post(self, request):
+        print(request.data)
         sku = request.data.get("sku", None)
         name = request.data.get("name", None)
         description = request.data.get("description", None)
@@ -121,6 +123,19 @@ class ProductListView(APIView):
             return paginator.get_paginated_response(serializer.data)
         except Exception as e:
             return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class RetrieveLatestProducts(ListAPIView):
+    def get(self, request):
+        try:
+            queryset = Product.objects.filter(recommended=True)[:3]
+            paginator = LimitOffsetPagination()
+            paginated_queryset = paginator.paginate_queryset(queryset, request)
+            serializer = ProductSerializer(paginated_queryset, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        except Exception as e:
+            return Response({"message": str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 #retrieve all details of a single product
