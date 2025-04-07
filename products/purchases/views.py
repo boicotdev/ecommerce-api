@@ -1,12 +1,12 @@
 from django.db import transaction
 from rest_framework.generics import ListAPIView, RetrieveAPIView
+from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from products.models import PurchaseItem, UnitOfMeasure, Product, Purchase
-from products.serializers import PurchaseSerializer
-
+from products.models import PurchaseItem, UnitOfMeasure, Product, Purchase, MissingItems
+from products.serializers import PurchaseSerializer, MissingItemSerializer
 
 
 class PurchaseCreateUpdateView(APIView):
@@ -17,9 +17,8 @@ class PurchaseCreateUpdateView(APIView):
 
     def post(self, request):
         """Crea una nueva compra."""
-        required_fields = {"purchased_by", "global_sell_percentage", "items"}
+        required_fields = {"purchased_by", "purchase_date", "global_sell_percentage", "items"}
         missing_fields = required_fields - request.data.keys()
-        print(request.data)
         if missing_fields:
             return Response({"error": f"Missing fields: {', '.join(missing_fields)}"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -28,6 +27,7 @@ class PurchaseCreateUpdateView(APIView):
         if global_sell_percentage < 10:
             return Response({'error': 'Global sell percentage must be at least 10%'}, status=status.HTTP_400_BAD_REQUEST)
         items_data = request.data.get("items", [])
+        purchase_date = request.data.get("purchase_date")
 
         if not items_data:
             return Response({"error": "At least one purchase item is required."}, status=status.HTTP_400_BAD_REQUEST)
@@ -37,7 +37,8 @@ class PurchaseCreateUpdateView(APIView):
                 # Crear la compra
                 purchase = Purchase.objects.create(
                     purchased_by_id=purchased_by,
-                    global_sell_percentage=global_sell_percentage
+                    global_sell_percentage=global_sell_percentage,
+                    purchase_date=purchase_date
                 )
 
                 purchase_items = []
@@ -83,6 +84,7 @@ class PurchaseCreateUpdateView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     def put(self, request):
+        print(request.data)
         purchase_id = request.data.get("purchase_id")
 
         if not purchase_id:
@@ -196,3 +198,16 @@ class PurchaseDetailView(RetrieveAPIView):
             return Response(serializer.data)
         except Purchase.DoesNotExist:
             return Response({"error": "Purchase not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+class RetrieveMissingItemsView(APIView):
+    permission_classes = [IsAdminUser]
+    def get(self, request):
+        try:
+            queryset = MissingItems.objects.all()
+            paginator = LimitOffsetPagination()
+            paginated_queryset = paginator.paginate_queryset(queryset, request)
+            serializer = MissingItemSerializer(paginated_queryset, many=True)
+            return paginator.get_paginated_response(serializer.data)
+        except Exception as e:
+            return Response({'message': str(e)}, status = status.HTTP_500_INTERNAL_SERVER_ERROR)

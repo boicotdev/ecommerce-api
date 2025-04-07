@@ -8,7 +8,7 @@ from .models import (
     OrderProduct,
     Category,
     Cart,
-    ProductReview, Shipment, Payment, Coupon, UnitOfMeasure, PurchaseItem, Purchase
+    ProductReview, Shipment, Payment, Coupon, UnitOfMeasure, PurchaseItem, Purchase, MissingItems
 )
 from rest_framework import serializers
 
@@ -186,6 +186,7 @@ class PurchaseItemSerializer(serializers.ModelSerializer):
     subtotal = serializers.ReadOnlyField()
     estimated_profit = serializers.ReadOnlyField()
     sale_price_per_weight = serializers.ReadOnlyField()
+    product = ProductSerializer()
 
     class Meta:
         model = PurchaseItem
@@ -204,3 +205,11 @@ class PurchaseSerializer(serializers.ModelSerializer):
         if value is None or value < 10:
             raise serializers.ValidationError("El porcentaje de venta debe ser al menos 10%")
         return value
+
+
+class MissingItemSerializer(serializers.ModelSerializer):
+    product = ProductSerializer()
+    order = OrderSerializer()
+    class Meta:
+        model = MissingItems
+        fields = ['id', 'product', 'last_updated', 'stock', 'missing_quantity', 'order']

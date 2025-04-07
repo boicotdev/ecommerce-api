@@ -6,7 +6,6 @@ from abc import abstractmethod
 from django.core.validators import RegexValidator
 from django.db import models
 
-
 def generate_unique_id(user_dni, purchase=False):
     """
     Genera un ID único con los siguientes formatos:
@@ -82,6 +81,7 @@ class Product(models.Model):
     has_discount = models.BooleanField(default=False, null=True, blank=True)
     purchase_price = models.FloatField(default=0, blank=True, null=True)
     discount_price = models.FloatField(default=0, blank=True, null=True)
+    last_updated = models.DateTimeField(auto_now_add=True, blank=True, null=True)
     # ------------------------ images --------------------
     main_image = models.ImageField(
         upload_to="products/", default="products/dummie_image.jpeg"
@@ -102,6 +102,7 @@ class Cart(models.Model):
     name = models.CharField(max_length=30)
     description = models.CharField(max_length=100)
     creation_date = models.DateTimeField(verbose_name="Cart creation", auto_now=True)
+    last_updated = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     def __str__(self):
         return f"Cart: {self.name} (ID: {self.id}, User: {self.user.username})"
@@ -166,6 +167,9 @@ class ProductReview(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     review = models.TextField(max_length=525)
     rank = models.IntegerField(choices=[(n, str(n)) for n in range(1, 6)])
+    created_at = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    last_updated = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+
 
     def __str__(self):
         return f"Review by {self.user.username} for {self.product.name} - {self.rank}★"
@@ -229,12 +233,14 @@ class Payment(models.Model):
     payment_date = models.DateTimeField(auto_created=True)
     payment_method = models.CharField(max_length=15, choices=PAYMENT_METHODS)
     payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS)
+    last_updated = models.DateTimeField(auto_now_add=True, blank=True, null=True)
 
     def __str__(self):
         return f"Payment {self.id} | {self.payment_status} | ${self.payment_amount}"
 
 
 class Coupon(models.Model):
+    created_by = models.ForeignKey('users.User', null=True, blank=True, on_delete=models.CASCADE)
     coupon_code = models.CharField(max_length=15)
     discount = models.IntegerField()
     creation_date = models.DateTimeField(auto_now=True)
@@ -259,8 +265,7 @@ class Purchase(models.Model):
     id = models.CharField(max_length=50, primary_key=True)
     purchased_by = models.ForeignKey("users.User", on_delete=models.SET_NULL, null=True, blank=True,
                                      related_name="user_admin")
-    purchase_date = models.DateTimeField(auto_now_add=True)
-    #purchase_date = models.DateTimeField(blank=True, null=True)
+    purchase_date = models.DateTimeField(auto_now_add=False, blank=True, null=True)
     last_updated = models.DateTimeField(auto_now=True)
     total_amount = models.FloatField(default=0)  # Total de compra
     global_sell_percentage = models.FloatField(default=10)  # Porcentaje de venta global
@@ -320,5 +325,17 @@ class PurchaseItem(models.Model):
         return subtotal_with_margin / (self.unit_measure.weight * self.quantity)
 
     def __str__(self):
-        return f"{self.quantity}x {self.product.name} @ ${self.purchase_price} (Sell %: {self.get_sell_percentage()}%)"
+        if self.product:
+            return f"{self.quantity}x {self.product.name} @ ${self.purchase_price} (Sell %: {self.get_sell_percentage()}%)"
+        return f"{self.quantity}x Desconocido @ ${self.purchase_price} (Sell %: {self.get_sell_percentage()}%)"
 
+
+class MissingItems(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="missing_item")
+    last_updated = models.DateTimeField(auto_now_add=True)
+    stock = models.IntegerField(default=1)
+    missing_quantity = models.IntegerField(default=0)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="pending_order")
+
+    def __str__(self):
+        return f"Item {self.product.sku} | Order {self.order.id} | Missing {self.missing_quantity}"
